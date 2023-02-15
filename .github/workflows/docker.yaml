@@ -1,0 +1,32 @@
+name: Docker
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: build app
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - run: |
+        npm install
+        npm run build
+
+    - name: docker login
+      env:
+        DOCKER_USER: ${{secrets.DOCKER_USER}}
+        DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+      run: |
+        docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - name: Build the docker image
+      run: |
+        docker build -t api-reports .
+    - name: Docker Push
+      run: |
+        docker tag api-reports ${{secrets.DOCKER_USER}}/mva:api-reports
+        docker push ${{secrets.DOCKER_USER}}/mva:api-reports
