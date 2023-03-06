@@ -8,40 +8,42 @@ import {
   Param,
 } from '@nestjs/common';
 
+import { HTTPError } from '../core/interfaces/Error';
 import { User } from '../core/schemas/Users.schema';
-import { UsersService } from './Users.service';
+//eslint-disable-next-line
+import { UsersService } from './users.service';
 
-@Controller('Users')
+@Controller('users')
 export class UsersController {
-  constructor(private readonly UserService: UsersService) {}
-
-  @Get()
-  getUsers(): Promise<User[]> {
-    return this.UserService.getAllUsers();
-  }
+  constructor(private readonly UsersService: UsersService) {}
 
   @Get(':id')
   getUser(@Param('id') id: string): Promise<User> {
-    return this.UserService.getOneUser(id);
+    return this.UsersService.getOneUser(id);
   }
 
   @Post()
-  createUser(@Body() User: User): Promise<User> {
-    return this.UserService.createUser(User);
+  createUser(@Body() User: User): Promise<HTTPError | User> {
+    return this.UsersService.createUser(User);
+  }
+
+  @Post('authenticate')
+  signIn(@Body() UserData: object): Promise<HTTPError | object> {
+    return this.UsersService.signIn(UserData);
   }
 
   @Patch(':id')
   updateUser(
     @Param('id') id: string,
     @Body() User: User,
-  ): Promise<User> {
-    return this.UserService.updateUser(id, User);
+  ): Promise<HTTPError | User> {
+    return this.UsersService.updateUser(id, User);
   }
 
   @Delete(':id')
   async deleteUser(@Param('id') id: string): Promise<object> {
     try {
-      await this.UserService.deleteUser(id);
+      await this.UsersService.deleteUser(id);
       return { success: true };
     } catch (error) {
       return { success: false };
