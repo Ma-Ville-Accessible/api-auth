@@ -12,10 +12,6 @@ import { User, UserDocument } from '../core/schemas/users.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
-  // async getAllUsers(): Promise<User[]> {
-  //   return await this.UserModel.find();
-  // }
-
   async getOneUser(id: string): Promise<User> {
     const User = await this.UserModel.findById(id);
     return User;
