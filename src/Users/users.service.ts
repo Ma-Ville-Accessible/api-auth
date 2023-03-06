@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
 
 import { HTTPError } from '../core/interfaces/Error';
-import { User, UserDocument } from '../core/schemas/Users.schema';
+import { User, UserDocument } from '../core/schemas/users.schema';
 
 @Injectable()
 export class UsersService {

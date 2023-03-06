@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 
 import { HTTPError } from '../core/interfaces/Error';
-import { User } from '../core/schemas/Users.schema';
+import { User } from '../core/schemas/users.schema';
 //eslint-disable-next-line
 import { UsersService } from './users.service';
 
