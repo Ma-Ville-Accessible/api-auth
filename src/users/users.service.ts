@@ -34,14 +34,14 @@ export class UsersService {
     }
 
     return {
-      access_token: jwt.sign(
+      accessToken: jwt.sign(
         { id: user._id, email: user.email },
         process.env.privateKey,
         { expiresIn: '900s' },
       ),
-      token_type: 'Bearer',
-      expires_in: 900,
-      refresh_token: user.refreshToken,
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: user.refreshToken,
     };
   }
 
@@ -52,20 +52,20 @@ export class UsersService {
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
-    if (user.refreshToken !== UserData.refresh_token) {
+    if (user.refreshToken !== UserData.refreshToken) {
       throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
     }
     user.refreshToken = Crypto.randomBytes(64).toString('hex');
     await user.save();
     return {
-      access_token: jwt.sign(
+      accessToken: jwt.sign(
         { id: user._id, email: user.email },
         process.env.privateKey,
         { expiresIn: '900s' },
       ),
-      token_type: 'Bearer',
-      expires_in: 900,
-      refresh_token: user.refreshToken,
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: user.refreshToken,
     };
   }
 
@@ -78,30 +78,30 @@ export class UsersService {
     const newUser = new this.UserModel({
       ...User,
       password: cryptedPassword,
-      refresh_token: Crypto.randomBytes(64).toString('hex'),
+      refreshToken: Crypto.randomBytes(64).toString('hex'),
     });
     await newUser.save();
 
     return {
-      access_token: jwt.sign(
+      accessToken: jwt.sign(
         { id: newUser._id, email: newUser.email },
         process.env.privateKey,
         { expiresIn: '900s' },
       ),
-      token_type: 'Bearer',
-      expires_in: 900,
-      refresh_token: newUser.refreshToken,
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: newUser.refreshToken,
     };
   }
 
   async signIn(UserData: any): Promise<HTTPError | object> {
-    if (!UserData?.grant_type) {
+    if (!UserData?.grantType) {
       throw new HttpException('Missing grantType', HttpStatus.BAD_REQUEST);
     }
-    switch (UserData.grant_type) {
+    switch (UserData.grantType) {
       case 'password':
         return this.authWithPassword(UserData);
-      case 'refresh_token':
+      case 'refreshToken':
         return this.authWithRefreshToken(UserData);
       default:
         throw new HttpException('Incorrect grant type', HttpStatus.BAD_REQUEST);
