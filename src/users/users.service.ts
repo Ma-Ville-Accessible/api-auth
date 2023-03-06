@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as Crypto from 'crypto';
@@ -14,21 +14,25 @@ export class UsersService {
 
   async getOneUser(id: string): Promise<User> {
     const User = await this.UserModel.findById(id);
+    if (!User) {
+      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+    }
     return User;
   }
 
   private async authWithPassword(UserData: any): Promise<HTTPError | object> {
     const user = await this.UserModel.findOne({ email: UserData.email });
     if (!user) {
-      return { error: 'User not found' };
+      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
     const isPasswordValid = await bcrypt.compare(
       UserData.password,
       user.password,
     );
     if (!isPasswordValid) {
-      return { error: 'Invalid password' };
+      throw new HttpException('Wrong credentials', HttpStatus.FORBIDDEN);
     }
+
     return {
       access_token: jwt.sign(
         { id: user._id, email: user.email },
@@ -46,10 +50,10 @@ export class UsersService {
   ): Promise<HTTPError | object> {
     const user = await this.UserModel.findById(UserData.id);
     if (!user) {
-      return { error: 'User not found' };
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     if (user.refreshToken !== UserData.refresh_token) {
-      return { error: 'Invalid refresh token' };
+      throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
     }
     user.refreshToken = Crypto.randomBytes(64).toString('hex');
     await user.save();
@@ -68,7 +72,7 @@ export class UsersService {
   async createUser(User: User): Promise<HTTPError | any> {
     const user = await this.UserModel.findOne({ email: User.email });
     if (user) {
-      return { error: 'User already exists' };
+      throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
     const cryptedPassword = await bcrypt.hash(User.password, 10);
     const newUser = new this.UserModel({
@@ -92,7 +96,7 @@ export class UsersService {
 
   async signIn(UserData: any): Promise<HTTPError | object> {
     if (!UserData?.grant_type) {
-      return { error: 'Missing grant type' };
+      throw new HttpException('Missing grantType', HttpStatus.BAD_REQUEST);
     }
     switch (UserData.grant_type) {
       case 'password':
@@ -100,7 +104,7 @@ export class UsersService {
       case 'refresh_token':
         return this.authWithRefreshToken(UserData);
       default:
-        return { error: 'Invalid grant type' };
+        throw new HttpException('Incorrect grant type', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -114,7 +118,7 @@ export class UsersService {
         storedUser.password,
       );
       if (!isPasswordValid) {
-        return { error: 'Invalid password' };
+        throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
       }
       storedUser.password = await bcrypt.hash(User.password, 10);
     }
