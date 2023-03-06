@@ -28,5 +28,5 @@ jobs:
         docker build -t api-reports .
     - name: Docker Push
       run: |
-        docker tag api-reports ${{secrets.DOCKER_USER}}/mva:api-reports
-        docker push ${{secrets.DOCKER_USER}}/mva:api-reports
+        docker tag api-reports ${{secrets.DOCKER_USER}}/mva:api-auth
+        docker push ${{secrets.DOCKER_USER}}/mva:api-auth
