@@ -6,8 +6,10 @@ import {
   Patch,
   Body,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 
+import { AuthGuard } from 'src/core/guards/auth.guard';
 import { HTTPError } from '../core/interfaces/Error';
 import { User } from '../core/schemas/users.schema';
 //eslint-disable-next-line
@@ -17,6 +19,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly UsersService: UsersService) {}
 
+  @UseGuards(AuthGuard)
   @Get(':id')
   getUser(@Param('id') id: string): Promise<User> {
     return this.UsersService.getOneUser(id);
