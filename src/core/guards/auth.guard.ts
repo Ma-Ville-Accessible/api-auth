@@ -32,7 +32,7 @@ export class AuthGuard implements CanActivate {
       const user = await this.UserModel.findById(userId);
       return !!user;
     } catch (error) {
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException('Unauthorized request', HttpStatus.UNAUTHORIZED);
     }
   };
 }

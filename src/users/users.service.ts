@@ -12,12 +12,17 @@ import { User, UserDocument } from '../core/schemas/users.schema';
 export class UsersService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
-  async getOneUser(id: string): Promise<User> {
+  async getOneUser(id: string): Promise<object> {
     const User = await this.UserModel.findById(id);
     if (!User) {
       throw new HttpException('Not found', HttpStatus.NOT_FOUND);
     }
-    return User;
+    return {
+      id: User._id,
+      email: User.email,
+      firstName: User.firstName,
+      lastName: User.lastName,
+    };
   }
 
   private async authWithPassword(UserData: any): Promise<HTTPError | object> {
@@ -74,6 +79,9 @@ export class UsersService {
     if (user) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
+    if (!User.firstName || !User.lastName || !User.email || !User.password) {
+      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
+    }
     const cryptedPassword = await bcrypt.hash(User.password, 10);
     const newUser = new this.UserModel({
       ...User,
@@ -82,6 +90,7 @@ export class UsersService {
     });
     await newUser.save();
 
+    //replace with simple response later
     return {
       accessToken: jwt.sign(
         { id: newUser._id, email: newUser.email },

@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   UseGuards,
+  HttpCode,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/core/guards/auth.guard';
@@ -21,7 +22,7 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get(':id')
-  getUser(@Param('id') id: string): Promise<User> {
+  getUser(@Param('id') id: string): Promise<object> {
     return this.UsersService.getOneUser(id);
   }
 
@@ -30,6 +31,7 @@ export class UsersController {
     return this.UsersService.createUser(User);
   }
 
+  @HttpCode(200)
   @Post('authenticate')
   signIn(@Body() UserData: object): Promise<HTTPError | object> {
     return this.UsersService.signIn(UserData);
