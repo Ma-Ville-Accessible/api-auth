@@ -22,7 +22,7 @@ $ yarn dev
 
 - get[:id] => get user informations
 - patch[:id] => update a user
-- post[] => create a user
+- post[] => create a user (required fields: email, password, lastName, firstName)
 - delete[:id] => delete a user
 
 #### /users/authenticate
