@@ -133,8 +133,4 @@ export class UsersService {
     }
     return await storedUser.save();
   }
-
-  async deleteUser(id: string): Promise<void> {
-    return await this.UserModel.findByIdAndDelete(id);
-  }
 }

@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Delete,
   Patch,
   Body,
   Param,
@@ -37,21 +36,12 @@ export class UsersController {
     return this.UsersService.signIn(UserData);
   }
 
+  @UseGuards(AuthGuard)
   @Patch(':id')
   updateUser(
     @Param('id') id: string,
     @Body() User: User,
   ): Promise<HTTPError | User> {
     return this.UsersService.updateUser(id, User);
-  }
-
-  @Delete(':id')
-  async deleteUser(@Param('id') id: string): Promise<object> {
-    try {
-      await this.UsersService.deleteUser(id);
-      return { success: true };
-    } catch (error) {
-      return { success: false };
-    }
   }
 }
