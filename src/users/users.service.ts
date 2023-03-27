@@ -47,6 +47,12 @@ export class UsersService {
       tokenType: 'Bearer',
       expiresIn: 900,
       refreshToken: user.refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
     };
   }
 
@@ -60,6 +66,7 @@ export class UsersService {
     if (user.refreshToken !== UserData.refreshToken) {
       throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
     }
+    user.usedRefresh.push(user.refreshToken);
     user.refreshToken = Crypto.randomBytes(64).toString('hex');
     await user.save();
     return {
@@ -71,6 +78,12 @@ export class UsersService {
       tokenType: 'Bearer',
       expiresIn: 900,
       refreshToken: user.refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
     };
   }
 
