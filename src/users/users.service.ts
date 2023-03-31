@@ -1,16 +1,27 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import * as sgMail from '@sendgrid/mail';
+import handlebars from 'handlebars';
 
 import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
+  emailTemplate = readFileSync(
+    join(__dirname, '../assets/templates/welcome.handlebars'),
+    'utf-8',
+  );
+  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  }
 
   async getOneUser(id: string): Promise<object> {
     const User = await this.UserModel.findById(id);
@@ -102,6 +113,15 @@ export class UsersService {
       refreshToken: Crypto.randomBytes(64).toString('hex'),
     });
     await newUser.save();
+
+    const template = handlebars.compile(this.emailTemplate);
+
+    sgMail.send({
+      to: 'simon.deflesschouwer@mmibordeaux.com', // Change to your recipient
+      from: 'noreply@defless.fr', // Change to your verified sender
+      subject: 'Bienvenue !',
+      html: template({}),
+    });
 
     //replace with simple response later
     return {
