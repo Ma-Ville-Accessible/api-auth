@@ -122,7 +122,10 @@ export class UsersService {
 
     sgMail.send({
       to: 'simon.deflesschouwer@mmibordeaux.com', // Change to your recipient
-      from: 'noreply@defless.fr', // Change to your verified sender
+      from: {
+        email: 'noreply@defless.fr', // Change to your verified sender
+        name: 'Ma ville accessible',
+      },
       subject: 'Bienvenue !',
       html: template({}),
     });
@@ -182,10 +185,14 @@ export class UsersService {
 
     sgMail.send({
       to: 'simon.deflesschouwer@mmibordeaux.com', // Change to your recipient
-      from: 'noreply@defless.fr', // Change to your verified sender
+      from: {
+        email: 'noreply@defless.fr', // Change to your verified sender
+        name: 'Ma ville accessible',
+      },
       subject: 'Réinitialisation de votre mot de passe',
       html: template({
         url: `http://localhost:3000/reset-password?ota=${user.otaCode}&userId=${user._id}`,
+        firstName: user.firstName,
       }),
     });
 
