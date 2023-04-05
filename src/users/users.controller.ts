@@ -7,9 +7,11 @@ import {
   Param,
   UseGuards,
   HttpCode,
+  Put,
 } from '@nestjs/common';
 
 import { AuthGuard } from 'src/core/guards/auth.guard';
+import { OtaGuard } from 'src/core/guards/ota.guard';
 import { HTTPError } from '../core/interfaces/Error';
 import { User } from '../core/schemas/users.schema';
 //eslint-disable-next-line
@@ -43,5 +45,19 @@ export class UsersController {
     @Body() User: User,
   ): Promise<HTTPError | User> {
     return this.UsersService.updateUser(id, User);
+  }
+
+  @Post('password')
+  requestPasswordReset(@Body() data: object): Promise<HTTPError | object> {
+    return this.UsersService.requestPasswordReset(data);
+  }
+
+  @UseGuards(OtaGuard)
+  @Put(':id/password')
+  updateUserPassword(
+    @Param('id') id: string,
+    @Body() data: object,
+  ): Promise<HTTPError | object> {
+    return this.UsersService.updateUserPassword(id, data);
   }
 }

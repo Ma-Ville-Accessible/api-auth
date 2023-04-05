@@ -23,6 +23,9 @@ export class User {
   @Prop({ unique: true })
   refreshToken: string;
 
+  @Prop({ unique: true })
+  otaCode: string;
+
   @Prop()
   usedRefresh: [string];
 }
