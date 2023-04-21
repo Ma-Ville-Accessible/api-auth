@@ -18,7 +18,6 @@ export class CreateUserDto {
   password: string;
 
   @IsString()
-  @IsNotEmpty()
   image: string;
 
   @IsString()
@@ -27,5 +26,5 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  uesdRefreshToken: string[];
+  usedRefreshToken: string[];
 }
