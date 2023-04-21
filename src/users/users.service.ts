@@ -57,10 +57,10 @@ export class UsersService {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
         process.env.privateKey,
-        { expiresIn: '900s' },
+        { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
-      expiresIn: 900,
+      expiresIn: 9000000,
       refreshToken: user.refreshToken,
       user: {
         id: user._id,
@@ -88,10 +88,10 @@ export class UsersService {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
         process.env.privateKey,
-        { expiresIn: '900s' },
+        { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
-      expiresIn: 900,
+      expiresIn: 9000000,
       refreshToken: user.refreshToken,
       user: {
         id: user._id,
@@ -135,10 +135,10 @@ export class UsersService {
       accessToken: jwt.sign(
         { id: newUser._id, email: newUser.email },
         process.env.privateKey,
-        { expiresIn: '900s' },
+        { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
-      expiresIn: 900,
+      expiresIn: 9000000,
       refreshToken: newUser.refreshToken,
     };
   }
