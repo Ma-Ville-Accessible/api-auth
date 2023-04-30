@@ -121,7 +121,7 @@ export class UsersService {
     const template = handlebars.compile(this.welcomeEmail);
 
     sgMail.send({
-      to: user.email, // Change to your recipient
+      to: newUser.email, // Change to your recipient
       from: {
         email: 'noreply@defless.fr', // Change to your verified sender
         name: 'Ma ville accessible',
