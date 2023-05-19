@@ -177,7 +177,7 @@ export class UsersService {
   async requestPasswordReset(data: object): Promise<HTTPError | object> {
     const user = await this.UserModel.findOne({ email: data['email'] });
     if (!user) {
-      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     user.otaCode = Crypto.randomBytes(64).toString('hex');
 
@@ -191,7 +191,7 @@ export class UsersService {
       },
       subject: 'Réinitialisation de votre mot de passe',
       html: template({
-        url: `http://localhost:3000/reset-password?ota=${user.otaCode}&userId=${user._id}`,
+        url: `${process.env.LOST_PASSWORD_URL}?ota=${user.otaCode}&userId=${user._id}`,
         firstName: user.firstName,
       }),
     });
