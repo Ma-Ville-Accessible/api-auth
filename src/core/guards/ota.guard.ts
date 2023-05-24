@@ -19,7 +19,6 @@ export class OtaGuard implements CanActivate {
   }
 
   private validateRequest = async (req): Promise<boolean> => {
-    console.log(req.headers);
     try {
       if (!req.headers.authorization) {
         throw new HttpException(
@@ -28,10 +27,21 @@ export class OtaGuard implements CanActivate {
         );
       }
       const otaCode = req.headers.authorization.split(' ')[1];
+      console.log(otaCode);
       const userId = req.params.id;
 
       const user = await this.UserModel.findOne({ _id: userId });
-      return otaCode && otaCode === user.otaCode;
+      if (!user.otaCode || user.otaCode !== otaCode) {
+        console.log('fuck');
+        user.otaCode = null;
+        await user.save();
+        throw new HttpException(
+          'Unauthorized request',
+          HttpStatus.UNAUTHORIZED,
+        );
+      } else {
+        return true;
+      }
     } catch (error) {
       throw new HttpException('Unauthorized request', HttpStatus.UNAUTHORIZED);
     }

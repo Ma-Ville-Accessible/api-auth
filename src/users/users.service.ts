@@ -209,6 +209,7 @@ export class UsersService {
       throw new HttpException('password_mismatch', HttpStatus.BAD_REQUEST);
     }
     user.password = await bcrypt.hash(data['password'], 10);
+    user.otaCode = null;
     await user.save();
     return { message: 'Password updated' };
   }
