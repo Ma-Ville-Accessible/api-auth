@@ -204,6 +204,9 @@ export class UsersService {
     id: string,
     data: object,
   ): Promise<HTTPError | object> {
+    if (!data['password'] || !data['passwordRepeat']) {
+      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
+    }
     const user = await this.UserModel.findById(id);
     if (data['password'] !== data['passwordRepeat']) {
       throw new HttpException('password_mismatch', HttpStatus.BAD_REQUEST);
