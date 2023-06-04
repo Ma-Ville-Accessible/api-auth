@@ -16,6 +16,8 @@ import { HTTPError } from '../core/interfaces/Error';
 import { User } from '../core/schemas/users.schema';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './Dto/update-user.dto';
+import { ForgottenPasswordDto } from './Dto/forgotten-password.dto';
+import { PasswordChangeDto } from './Dto/password-change.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { AuthenticateUserDto } from './Dto/authenticate-user.dto';
 import { createExample } from '../swagger/users/create.example';
@@ -78,12 +80,35 @@ export class UsersController {
   }
 
   @Post('password')
+  @ApiOperation({ summary: 'Forgotten password' })
+  @ApiBody({
+    description: 'send forgotten password request',
+    type: ForgottenPasswordDto,
+    examples: {
+      example: {
+        value: { email: 'test@email.com ' },
+      },
+    },
+  })
   requestPasswordReset(@Body() data: object): Promise<HTTPError | object> {
     return this.usersService.requestPasswordReset(data);
   }
 
   @UseGuards(OtaGuard)
   @Put(':id/password')
+  @ApiOperation({ summary: 'Password change' })
+  @ApiBody({
+    description: 'Change user password',
+    type: PasswordChangeDto,
+    examples: {
+      example: {
+        value: {
+          password: 'strongPassword',
+          passwordRepeat: 'strongPassword',
+        },
+      },
+    },
+  })
   updateUserPassword(
     @Param('id') id: string,
     @Body() data: object,
