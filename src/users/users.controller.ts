@@ -115,4 +115,10 @@ export class UsersController {
   ): Promise<HTTPError | object> {
     return this.usersService.updateUserPassword(id, data);
   }
+
+  @UseGuards(OtaGuard)
+  @Get(':id/validate')
+  verifyUser(@Param('id') id: string): Promise<HTTPError | object> {
+    return this.usersService.verifyUser(id);
+  }
 }

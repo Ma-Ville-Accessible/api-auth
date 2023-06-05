@@ -26,6 +26,9 @@ export class User {
   @Prop({ unique: true })
   otaCode: string;
 
+  @Prop({ default: false })
+  isVerified: boolean;
+
   @Prop()
   usedRefresh: [string];
 }

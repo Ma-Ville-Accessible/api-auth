@@ -15,8 +15,8 @@ import { User, UserDocument } from '../core/schemas/users.schema';
 
 @Injectable()
 export class UsersService {
-  welcomeEmail = readFileSync(
-    join(__dirname, '../assets/templates/welcome.handlebars'),
+  emailValidation = readFileSync(
+    join(__dirname, '../assets/templates/emaiLValidation.handlebars'),
     'utf-8',
   );
   resetPasswordEmail = readFileSync(
@@ -30,20 +30,21 @@ export class UsersService {
   async getOneUser(id: string): Promise<object> {
     const User = await this.UserModel.findById(id);
     if (!User) {
-      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return {
       id: User._id,
       email: User.email,
       firstName: User.firstName,
       lastName: User.lastName,
+      isVerified: User.isVerified,
     };
   }
 
   private async authWithPassword(UserData: any): Promise<HTTPError | object> {
     const user = await this.UserModel.findOne({ email: UserData.email });
     if (!user) {
-      throw new HttpException('Not found', HttpStatus.NOT_FOUND);
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     const isPasswordValid = await bcrypt.compare(
       UserData.password,
@@ -67,6 +68,7 @@ export class UsersService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        isVerified: user.isVerified,
       },
     };
   }
@@ -114,20 +116,24 @@ export class UsersService {
     const newUser = new this.UserModel({
       ...User,
       password: cryptedPassword,
+      otaCode: Crypto.randomBytes(64).toString('hex'),
       refreshToken: Crypto.randomBytes(64).toString('hex'),
     });
     await newUser.save();
 
-    const template = handlebars.compile(this.welcomeEmail);
+    const template = handlebars.compile(this.emailValidation);
 
     sgMail.send({
-      to: newUser.email, // Change to your recipient
+      to: User.email, // Change to your recipient
       from: {
         email: 'noreply@defless.fr', // Change to your verified sender
         name: 'Ma ville accessible',
       },
       subject: 'Bienvenue !',
-      html: template({}),
+      html: template({
+        url: `${process.env.VALIDATE_EMAIL_URL}?ota=${newUser.otaCode}&userId=${newUser._id}`,
+        firstName: newUser.firstName,
+      }),
     });
 
     //replace with simple response later
@@ -209,11 +215,18 @@ export class UsersService {
     }
     const user = await this.UserModel.findById(id);
     if (data['password'] !== data['passwordRepeat']) {
-      throw new HttpException('password_mismatch', HttpStatus.BAD_REQUEST);
+      throw new HttpException('Passwords mismatch', HttpStatus.BAD_REQUEST);
     }
     user.password = await bcrypt.hash(data['password'], 10);
     user.otaCode = null;
     await user.save();
     return { message: 'Password updated' };
+  }
+
+  async verifyUser(id: string) {
+    const user = await this.UserModel.findById(id);
+    user.isVerified = true;
+    await user.save();
+    return { message: 'User validated' };
   }
 }
