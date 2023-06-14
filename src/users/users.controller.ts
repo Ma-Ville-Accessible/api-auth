@@ -18,6 +18,7 @@ import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './Dto/update-user.dto';
 import { ForgottenPasswordDto } from './Dto/forgotten-password.dto';
 import { PasswordChangeDto } from './Dto/password-change.dto';
+import { RequestPasswordDto } from './Dto/request-password.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { AuthenticateUserDto } from './Dto/authenticate-user.dto';
 import { createExample } from '../swagger/users/create.example';
@@ -44,7 +45,7 @@ export class UsersController {
       example: createExample,
     },
   })
-  createUser(@Body() User: User): Promise<HTTPError | User> {
+  createUser(@Body() User: CreateUserDto): Promise<HTTPError | any> {
     return this.usersService.createUser(User);
   }
 
@@ -58,15 +59,15 @@ export class UsersController {
       example: authenticateExample,
     },
   })
-  signIn(@Body() UserData: object): Promise<HTTPError | object> {
+  signIn(@Body() UserData: object): Promise<HTTPError | any> {
     return this.usersService.signIn(UserData);
   }
 
   @UseGuards(AuthGuard)
   @Patch(':id')
-  @ApiOperation({ summary: 'Update category' })
+  @ApiOperation({ summary: 'Update user' })
   @ApiBody({
-    description: 'Update category',
+    description: 'Update user',
     type: UpdateUserDto,
     examples: {
       example: updateExample,
@@ -90,7 +91,9 @@ export class UsersController {
       },
     },
   })
-  requestPasswordReset(@Body() data: object): Promise<HTTPError | object> {
+  requestPasswordReset(
+    @Body() data: RequestPasswordDto,
+  ): Promise<HTTPError | any> {
     return this.usersService.requestPasswordReset(data);
   }
 
@@ -111,14 +114,15 @@ export class UsersController {
   })
   updateUserPassword(
     @Param('id') id: string,
-    @Body() data: object,
-  ): Promise<HTTPError | object> {
-    return this.usersService.updateUserPassword(id, data);
+    @Body() body: PasswordChangeDto,
+  ): Promise<HTTPError | any> {
+    return this.usersService.updateUserPassword(id, body);
   }
 
   @UseGuards(OtaGuard)
   @Get(':id/validate')
-  verifyUser(@Param('id') id: string): Promise<HTTPError | object> {
+  // create return message type
+  verifyUser(@Param('id') id: string): Promise<HTTPError | any> {
     return this.usersService.verifyUser(id);
   }
 }

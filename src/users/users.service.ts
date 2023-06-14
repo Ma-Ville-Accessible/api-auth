@@ -3,7 +3,7 @@ import { join } from 'path';
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
@@ -12,15 +12,16 @@ import handlebars from 'handlebars';
 
 import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
+import { CreateUserDto } from './Dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
   emailValidation = readFileSync(
-    join(__dirname, '../assets/templates/emaiLValidation.handlebars'),
+    join(__dirname, '../../assets/templates/emaiLValidation.handlebars'),
     'utf-8',
   );
   resetPasswordEmail = readFileSync(
-    join(__dirname, '../assets/templates/forgottenPassword.handlebars'),
+    join(__dirname, '../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {
@@ -28,6 +29,10 @@ export class UsersService {
   }
 
   async getOneUser(id: string): Promise<object> {
+    console.log(id);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     const User = await this.UserModel.findById(id);
     if (!User) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -51,7 +56,7 @@ export class UsersService {
       user.password,
     );
     if (!isPasswordValid) {
-      throw new HttpException('Wrong credentials', HttpStatus.FORBIDDEN);
+      throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
     }
 
     return {
@@ -73,6 +78,7 @@ export class UsersService {
     };
   }
 
+  //could delegate this to the guard
   private async authWithRefreshToken(
     UserData: any,
   ): Promise<HTTPError | object> {
@@ -104,7 +110,7 @@ export class UsersService {
     };
   }
 
-  async createUser(User: User): Promise<HTTPError | any> {
+  async createUser(User: CreateUserDto): Promise<HTTPError | any> {
     const user = await this.UserModel.findOne({ email: User.email });
     if (user) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
@@ -113,18 +119,19 @@ export class UsersService {
       throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
     }
     const cryptedPassword = await bcrypt.hash(User.password, 10);
-    const newUser = new this.UserModel({
+    const newUser = await this.UserModel.create({
       ...User,
       password: cryptedPassword,
       otaCode: Crypto.randomBytes(64).toString('hex'),
       refreshToken: Crypto.randomBytes(64).toString('hex'),
     });
+
     await newUser.save();
 
     const template = handlebars.compile(this.emailValidation);
 
     sgMail.send({
-      to: User.email, // Change to your recipient
+      to: User.email,
       from: {
         email: 'noreply@defless.fr', // Change to your verified sender
         name: 'Ma ville accessible',
@@ -159,7 +166,7 @@ export class UsersService {
       case 'refreshToken':
         return this.authWithRefreshToken(UserData);
       default:
-        throw new HttpException('Incorrect grant type', HttpStatus.BAD_REQUEST);
+        throw new HttpException('Incorrect grantType', HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -208,16 +215,16 @@ export class UsersService {
 
   async updateUserPassword(
     id: string,
-    data: object,
+    body: object,
   ): Promise<HTTPError | object> {
-    if (!data['password'] || !data['passwordRepeat']) {
+    if (!body['password'] || !body['passwordRepeat']) {
       throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
     }
     const user = await this.UserModel.findById(id);
-    if (data['password'] !== data['passwordRepeat']) {
+    if (body['password'] !== body['passwordRepeat']) {
       throw new HttpException('Passwords mismatch', HttpStatus.BAD_REQUEST);
     }
-    user.password = await bcrypt.hash(data['password'], 10);
+    user.password = await bcrypt.hash(body['password'], 10);
     user.otaCode = null;
     await user.save();
     return { message: 'Password updated' };
@@ -225,6 +232,9 @@ export class UsersService {
 
   async verifyUser(id: string) {
     const user = await this.UserModel.findById(id);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
     user.isVerified = true;
     await user.save();
     return { message: 'User validated' };
