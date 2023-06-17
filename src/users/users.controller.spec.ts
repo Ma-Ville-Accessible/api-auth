@@ -6,7 +6,7 @@ import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as sgMail from '@sendgrid/mail';
 
-import { User } from '../core/schemas/Users.schema';
+import { User } from '../core/schemas/users.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { isJWT } from 'class-validator';
