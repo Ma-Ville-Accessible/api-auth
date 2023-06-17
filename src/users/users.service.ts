@@ -16,7 +16,7 @@ import { CreateUserDto } from './Dto/create-user.dto';
 @Injectable()
 export class UsersService {
   emailValidation = readFileSync(
-    require.resolve('../../assets/templates/emaiLValidation.handlebars'),
+    require.resolve('../../assets/templates/emailValidation.handlebars'),
     'utf-8',
   );
   resetPasswordEmail = readFileSync(
