@@ -1,30 +1,29 @@
+import { readFileSync } from 'fs';
+
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
+import handlebars from 'handlebars';
 
 import { send } from '../core/utils/mails';
 import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore:
-// eslint-disable-next-line
-const emailValidation = require('../../assets/templates/emaiLValidation.handlebars');
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore:
-// eslint-disable-next-line
-const resetPasswordEmail = require('../../assets/templates/forgottenPassword.handlebars');
-
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {
-    console.log(emailValidation());
-  }
+  emailValidation = readFileSync(
+    require.resolve('../../assets/templates/emaiLValidation.handlebars'),
+    'utf-8',
+  );
+  resetPasswordEmail = readFileSync(
+    require.resolve('../../assets/templates/forgottenPassword.handlebars'),
+    'utf-8',
+  );
+  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getOneUser(id: string): Promise<object> {
     if (!Types.ObjectId.isValid(id)) {
@@ -125,7 +124,7 @@ export class UsersService {
 
     await newUser.save();
 
-    const template = emailValidation();
+    const template = handlebars.compile(this.emailValidation);
 
     await send(
       User.email,
@@ -187,7 +186,7 @@ export class UsersService {
     }
     user.otaCode = Crypto.randomBytes(64).toString('hex');
 
-    const template = resetPasswordEmail();
+    const template = handlebars.compile(this.resetPasswordEmail);
 
     send(
       user.email,
