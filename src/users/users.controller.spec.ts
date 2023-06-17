@@ -13,7 +13,7 @@ import { isJWT } from 'class-validator';
 
 describe('UsersController', () => {
   let usersController: UsersController;
-  //let UsersService: UsersService;
+
   Object.assign(sgMail.send, jest.fn());
   const save = jest.fn();
   const mockedUserModel = {
@@ -34,7 +34,10 @@ describe('UsersController', () => {
     },
   ];
 
+  jest.mock('@sendgrid/mail');
+
   process.env.privateKey = 'test';
+  process.env.ENV = 'test';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

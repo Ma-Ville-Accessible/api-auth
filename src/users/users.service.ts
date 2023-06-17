@@ -7,9 +7,9 @@ import { Model, Types } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import * as sgMail from '@sendgrid/mail';
 import handlebars from 'handlebars';
 
+import { send } from '../core/utils/mails';
 import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
@@ -24,12 +24,9 @@ export class UsersService {
     join(__dirname, '../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
-  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  }
+  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getOneUser(id: string): Promise<object> {
-    console.log(id);
     if (!Types.ObjectId.isValid(id)) {
       throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
     }
@@ -130,18 +127,14 @@ export class UsersService {
 
     const template = handlebars.compile(this.emailValidation);
 
-    sgMail.send({
-      to: User.email,
-      from: {
-        email: 'noreply@defless.fr', // Change to your verified sender
-        name: 'Ma ville accessible',
-      },
-      subject: 'Bienvenue !',
-      html: template({
+    await send(
+      User.email,
+      'Bienvenue !',
+      template({
         url: `${process.env.VALIDATE_EMAIL_URL}?ota=${newUser.otaCode}&userId=${newUser._id}`,
         firstName: newUser.firstName,
       }),
-    });
+    );
 
     //replace with simple response later
     return {
@@ -196,18 +189,14 @@ export class UsersService {
 
     const template = handlebars.compile(this.resetPasswordEmail);
 
-    sgMail.send({
-      to: user.email, // Change to your recipient
-      from: {
-        email: 'noreply@defless.fr', // Change to your verified sender
-        name: 'Ma ville accessible',
-      },
-      subject: 'Réinitialisation de votre mot de passe',
-      html: template({
+    send(
+      user.email,
+      'Réinitialisation de votre mot de passe',
+      template({
         url: `${process.env.LOST_PASSWORD_URL}?ota=${user.otaCode}&userId=${user._id}`,
         firstName: user.firstName,
       }),
-    });
+    );
 
     await user.save();
     return { message: 'Password reset requested' };
