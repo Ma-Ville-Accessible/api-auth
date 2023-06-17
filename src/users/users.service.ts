@@ -17,11 +17,11 @@ import { CreateUserDto } from './Dto/create-user.dto';
 @Injectable()
 export class UsersService {
   emailValidation = readFileSync(
-    '../../assets/templates/emaiLValidation.handlebars',
+    require.resolve('../../assets/templates/emaiLValidation.handlebars'),
     'utf-8',
   );
   resetPasswordEmail = readFileSync(
-    '../../assets/templates/forgottenPassword.handlebars',
+    require.resolve('../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
