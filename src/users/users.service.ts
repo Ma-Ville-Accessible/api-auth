@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { resolve } from 'path';
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -17,11 +17,11 @@ import { CreateUserDto } from './Dto/create-user.dto';
 @Injectable()
 export class UsersService {
   emailValidation = readFileSync(
-    join(__dirname, '../../assets/templates/emaiLValidation.handlebars'),
+    resolve(__dirname, '../../assets/templates/emaiLValidation.handlebars'),
     'utf-8',
   );
   resetPasswordEmail = readFileSync(
-    join(__dirname, '../../assets/templates/forgottenPassword.handlebars'),
+    resolve(__dirname, '../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
