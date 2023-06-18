@@ -12,6 +12,7 @@ import { send } from '../core/utils/mails';
 import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
+import { UpdateUserDto } from './Dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -162,20 +163,10 @@ export class UsersService {
     }
   }
 
-  async updateUser(id: string, User: User): Promise<HTTPError | User> {
+  async updateUser(id: string, User: UpdateUserDto): Promise<HTTPError | User> {
     const storedUser = await this.UserModel.findById(id);
     storedUser.lastName = User.lastName;
     storedUser.firstName = User.firstName;
-    if (User.password) {
-      const isPasswordValid = await bcrypt.compare(
-        User.password,
-        storedUser.password,
-      );
-      if (!isPasswordValid) {
-        throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
-      }
-      storedUser.password = await bcrypt.hash(User.password, 10);
-    }
     return await storedUser.save();
   }
 

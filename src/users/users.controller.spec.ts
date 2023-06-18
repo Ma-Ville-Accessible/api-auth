@@ -417,23 +417,23 @@ describe('UsersController', () => {
     });
   });
 
-  // describe('update(:id)', () => {
-  //   it('should delete a User', async () => {
-  //     mockedUserModel.findById.mockReturnValue(mockData[0]);
-  //     mockData[0].save.mockReturnValue({
-  //       title: 'test1',
-  //       comment: 'testComment',
-  //     });
-  //     const newUser = new User();
-  //     newUser.title = 'test1';
-  //     newUser.comment = 'testComment';
-  //     expect(
-  //       await UsersController.updateUser('test', newUser),
-  //     ).toStrictEqual({
-  //       title: 'test1',
-  //       comment: 'testComment',
-  //     });
-  //     expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
-  //   });
-  // });
+  describe('update(:id)', () => {
+    it('should update a User', async () => {
+      const user = {
+        lastName: 'lastName',
+        firstName: 'firstName',
+      };
+
+      mockedUserModel.findById.mockReturnValue({
+        save,
+        firstName: 'oldFirstName',
+        lastName: 'oldLastName',
+      });
+      save.mockResolvedValueOnce(user);
+      expect(await usersController.updateUser('test', user)).toStrictEqual(
+        user,
+      );
+      expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
+    });
+  });
 });

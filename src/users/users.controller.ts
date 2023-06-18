@@ -75,7 +75,7 @@ export class UsersController {
   })
   updateUser(
     @Param('id') id: string,
-    @Body() User: User,
+    @Body() User: UpdateUserDto,
   ): Promise<HTTPError | User> {
     return this.usersService.updateUser(id, User);
   }
