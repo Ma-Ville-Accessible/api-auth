@@ -16,15 +16,4 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   password: string;
-
-  @IsString()
-  image: string;
-
-  @IsString()
-  @IsNotEmpty()
-  refreshToken: string;
-
-  @IsString()
-  @IsNotEmpty()
-  usedRefreshToken: string[];
 }
