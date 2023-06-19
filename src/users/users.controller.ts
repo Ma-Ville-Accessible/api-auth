@@ -9,6 +9,7 @@ import {
   UseGuards,
   Put,
 } from '@nestjs/common';
+import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { AuthGuard } from 'src/core/guards/auth.guard';
 import { OtaGuard } from 'src/core/guards/ota.guard';
@@ -50,6 +51,7 @@ export class UsersController {
   }
 
   @HttpCode(200)
+  @Throttle(10, 60)
   @Post('authenticate')
   @ApiOperation({ summary: 'Authenticate user' })
   @ApiBody({
