@@ -59,7 +59,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
-        process.env.privateKey,
+        process.env.PIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
@@ -92,7 +92,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
-        process.env.privateKey,
+        process.env.PIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
@@ -140,7 +140,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: newUser._id, email: newUser.email },
-        process.env.privateKey,
+        process.env.PIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',

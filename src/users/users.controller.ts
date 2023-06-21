@@ -9,7 +9,7 @@ import {
   UseGuards,
   Put,
 } from '@nestjs/common';
-import { SkipThrottle, Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 
 import { AuthGuard } from 'src/core/guards/auth.guard';
 import { OtaGuard } from 'src/core/guards/ota.guard';

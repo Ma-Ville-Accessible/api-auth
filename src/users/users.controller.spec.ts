@@ -36,7 +36,7 @@ describe('UsersController', () => {
 
   jest.mock('@sendgrid/mail');
 
-  process.env.privateKey = 'test';
+  process.env.PIVATE_KEY = 'test';
   process.env.ENV = 'test';
 
   beforeEach(async () => {
@@ -116,7 +116,7 @@ describe('UsersController', () => {
       expect(isJWT(request.accessToken)).toBeTruthy();
       const tokenContent = jwt.verify(
         request.accessToken,
-        process.env.privateKey,
+        process.env.PIVATE_KEY,
       );
       expect(tokenContent.id).toBe('userId');
       expect(request.refreshToken).toBe('refreshToken');
@@ -206,7 +206,7 @@ describe('UsersController', () => {
         expect(isJWT(request.accessToken)).toBeTruthy();
         const tokenContent = jwt.verify(
           request.accessToken,
-          process.env.privateKey,
+          process.env.PIVATE_KEY,
         );
         expect(tokenContent.id).toBe('userId');
       });
@@ -265,7 +265,7 @@ describe('UsersController', () => {
         expect(isJWT(request.accessToken)).toBeTruthy();
         const tokenContent = jwt.verify(
           request.accessToken,
-          process.env.privateKey,
+          process.env.PIVATE_KEY,
         );
         expect(tokenContent.id).toBe('userId');
         expect(request.refreshToken).not.toBe('refreshToken');

@@ -11,7 +11,7 @@ import { UsersModule } from './users/users.module';
     ConfigModule.forRoot(),
     UsersModule,
     MongooseModule.forRoot(
-      `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@mva.xxcfh.mongodb.net/dev?retryWrites=true&w=majority`,
+      `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@mva.xxcfh.mongodb.net/${process.env.ENV}?retryWrites=true&w=majority`,
     ),
   ],
   controllers: [AppController],
