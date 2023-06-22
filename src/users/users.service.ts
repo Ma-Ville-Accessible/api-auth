@@ -112,9 +112,6 @@ export class UsersService {
     if (user) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
-    if (!User.firstName || !User.lastName || !User.email || !User.password) {
-      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
-    }
     const cryptedPassword = await bcrypt.hash(User.password, 10);
     const newUser = await this.UserModel.create({
       ...User,
@@ -150,9 +147,6 @@ export class UsersService {
   }
 
   async signIn(UserData: any): Promise<HTTPError | object> {
-    if (!UserData?.grantType) {
-      throw new HttpException('Missing grantType', HttpStatus.BAD_REQUEST);
-    }
     switch (UserData.grantType) {
       case 'password':
         return this.authWithPassword(UserData);
@@ -196,9 +190,6 @@ export class UsersService {
     id: string,
     body: object,
   ): Promise<HTTPError | object> {
-    if (!body['password'] || !body['passwordRepeat']) {
-      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
-    }
     const user = await this.UserModel.findById(id);
     if (body['password'] !== body['passwordRepeat']) {
       throw new HttpException('Passwords mismatch', HttpStatus.BAD_REQUEST);
