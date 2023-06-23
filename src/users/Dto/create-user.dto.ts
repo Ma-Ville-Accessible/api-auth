@@ -17,7 +17,7 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(8, {
-    message: 'Password is too short',
+    message: 'password is too short',
   })
   password: string;
 }

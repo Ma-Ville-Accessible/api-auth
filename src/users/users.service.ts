@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
@@ -27,9 +27,6 @@ export class UsersService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getOneUser(id: string): Promise<object> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
-    }
     const User = await this.UserModel.findById(id);
     if (!User) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);

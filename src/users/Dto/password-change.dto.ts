@@ -4,14 +4,14 @@ export class PasswordChangeDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(8, {
-    message: 'Password is too short',
+    message: 'password is too short',
   })
   password: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(8, {
-    message: 'PasswordRepeat is too short',
+    message: 'passwordRepeat is too short',
   })
   passwordRepeat: string;
 }

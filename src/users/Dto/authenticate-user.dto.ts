@@ -1,14 +1,20 @@
-import { IsNotEmpty, IsString, IsEmail } from 'class-validator';
+import { IsNotEmpty, IsString, IsEmail, ValidateIf } from 'class-validator';
 
 export class AuthenticateUserDto {
+  @ValidateIf((o) => o.grantType === 'password')
   @IsString()
-  @IsNotEmpty()
   @IsEmail()
-  email: string;
+  email?: string;
 
+  @ValidateIf((o) => o.grantType === 'password')
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password?: string;
+
+  @ValidateIf((o) => o.grantType === 'refreshToken')
+  @IsString()
+  @IsNotEmpty()
+  refreshToken?: string;
 
   @IsString()
   @IsNotEmpty()

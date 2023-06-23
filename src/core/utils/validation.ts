@@ -2,7 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ClassConstructor, plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
 
-class MultipleErrorsException extends HttpException {
+export class MultipleErrorsException extends HttpException {
   constructor(errors: any[]) {
     super({ errors }, HttpStatus.BAD_REQUEST);
   }
@@ -16,7 +16,6 @@ export const validateBody = async (
   const errors = await validate(parsed);
 
   if (errors.length > 0) {
-    console.log(errors[0]);
     throw new MultipleErrorsException(
       errors.map((e) => ({
         field: e.property,

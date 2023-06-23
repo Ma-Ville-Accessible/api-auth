@@ -8,6 +8,8 @@ import {
   Post,
   UseGuards,
   Put,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
@@ -26,6 +28,7 @@ import { updateExample } from '../swagger/users/update.example';
 import { authenticateExample } from '../swagger/users/authenticate.example';
 import { UsersService } from './users.service';
 import { validateBody } from 'src/core/utils/validation';
+import { Types } from 'mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -34,6 +37,9 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':id')
   getUser(@Param('id') id: string): Promise<object> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     return this.usersService.getOneUser(id);
   }
 
@@ -81,6 +87,9 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: UpdateUserDto,
   ): Promise<HTTPError | User> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     const data = await validateBody(body, UpdateUserDto);
     return this.usersService.updateUser(id, data);
   }
@@ -122,6 +131,9 @@ export class UsersController {
     @Param('id') id: string,
     @Body() body: PasswordChangeDto,
   ): Promise<HTTPError | any> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     const data = await validateBody(body, PasswordChangeDto);
     return this.usersService.updateUserPassword(id, data);
   }
@@ -130,6 +142,9 @@ export class UsersController {
   @Get(':id/validate')
   // create return message type
   verifyUser(@Param('id') id: string): Promise<HTTPError | any> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     return this.usersService.verifyUser(id);
   }
 }

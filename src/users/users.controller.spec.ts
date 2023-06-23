@@ -10,7 +10,6 @@ import { User } from '../core/schemas/users.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { isJWT } from 'class-validator';
-
 describe('UsersController', () => {
   let usersController: UsersController;
 
@@ -153,12 +152,16 @@ describe('UsersController', () => {
           lastName: 'test',
         });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing fields', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('password');
+      expect(error[0].errors).toStrictEqual([
+        'password is too short',
+        'password should not be empty',
+        'password must be a string',
+      ]);
     });
   });
 
@@ -166,20 +169,28 @@ describe('UsersController', () => {
     it('throw an error if the grantType is missing', async () => {
       let error;
       try {
-        await usersController.signIn({});
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore:
+        await usersController.signIn({
+          email: 'a@a.fr',
+        });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing grantType', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('grantType');
+      expect(error[0].errors).toStrictEqual([
+        'grantType should not be empty',
+        'grantType must be a string',
+      ]);
     });
     it('throw an error if the grantType is incorrect', async () => {
       let error;
       try {
         await usersController.signIn({
           grantType: 'invalid grant type',
+          email: 'a@a.fr',
         });
       } catch (e) {
         error = e;
@@ -201,6 +212,7 @@ describe('UsersController', () => {
         const request = await usersController.signIn({
           grantType: 'password',
           password,
+          email: 'user@test.fr',
         });
         expect(request.user.id).toBe('userId');
         expect(isJWT(request.accessToken)).toBeTruthy();
@@ -216,6 +228,8 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'password',
+            email: 'user@test.fr',
+            password: 'password',
           });
         } catch (e) {
           error = e;
@@ -235,6 +249,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'password',
+            email: 'user@test.fr',
             password: 'wrong password',
           });
         } catch (e) {
@@ -276,6 +291,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'refreshToken',
+            refreshToken: 'refreshToken',
           });
         } catch (e) {
           error = e;
@@ -294,7 +310,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'refreshToken',
-            password: 'wrong refresh token',
+            refreshToken: 'wrong refresh token',
           });
         } catch (e) {
           error = e;
@@ -391,12 +407,16 @@ describe('UsersController', () => {
           password: 'password',
         });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing fields', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('passwordRepeat');
+      expect(error[0].errors).toStrictEqual([
+        'passwordRepeat is too short',
+        'passwordRepeat should not be empty',
+        'passwordRepeat must be a string',
+      ]);
     });
 
     it('should throw an error if the two passwords mismatch', async () => {
