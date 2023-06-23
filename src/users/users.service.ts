@@ -166,32 +166,22 @@ export class UsersService {
 
   async updateUser(id: string, User: UpdateUserDto): Promise<HTTPError | User> {
     const storedUser = await this.UserModel.findById(id);
-    storedUser.lastName = User.lastName;
-    storedUser.firstName = User.firstName;
-
     if (User.oldPassword && User.newPassword) {
-      await this.changeUserPassword(id, User.oldPassword, User.newPassword);
+      const isPasswordValid = await bcrypt.compare(
+        User.oldPassword,
+        storedUser.password,
+      );
+
+      if (!isPasswordValid) {
+        throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
+      }
+
+      storedUser.lastName = User.lastName;
+      storedUser.firstName = User.firstName;
+      storedUser.password = await bcrypt.hash(User.newPassword, 10);
     }
 
     return await storedUser.save();
-  }
-
-  async changeUserPassword(
-    userId: string,
-    oldPassword: string,
-    newPassword: string,
-  ): Promise<HTTPError | object> {
-    const user = await this.UserModel.findById(userId);
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-
-    if (!isPasswordValid) {
-      throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
-    }
-
-    user.password = await bcrypt.hash(newPassword, 10);
-
-    await user.save();
-    return { code: HttpStatus.OK, message: 'Password updated' };
   }
 
   async requestPasswordReset(data: object): Promise<HTTPError | object> {

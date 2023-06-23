@@ -418,7 +418,7 @@ describe('UsersController', () => {
   });
 
   describe('update(:id)', () => {
-    it('should update a User', async () => {
+    it('should update a User without a new password', async () => {
       const user = {
         lastName: 'lastName',
         firstName: 'firstName',
@@ -433,6 +433,35 @@ describe('UsersController', () => {
       expect(await usersController.updateUser('test', user)).toStrictEqual(
         user,
       );
+      expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
+    });
+
+    it('should update a User with a new password', async () => {
+      bcrypt.hash = jest.fn();
+      bcrypt.compare = jest.fn();
+
+      const user = {
+        lastName: 'lastName',
+        firstName: 'firstName',
+        oldPassword: 'oldPassword',
+        newPassword: 'newPassword',
+      };
+
+      const cryptedPassword = await bcrypt.hash(user.oldPassword);
+
+      mockedUserModel.findById.mockReturnValue({
+        save,
+        firstName: 'oldFirstName',
+        lastName: 'oldLastName',
+        password: cryptedPassword,
+      });
+
+      save.mockResolvedValueOnce(user);
+      expect(await usersController.updateUser('test', user)).toStrictEqual(
+        user,
+      );
+      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword', 'newPassword');
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword', 10);
       expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
     });
   });
