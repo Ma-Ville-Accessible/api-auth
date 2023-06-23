@@ -24,6 +24,7 @@ export class UsersService {
     require.resolve('../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
+
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getOneUser(id: string): Promise<object> {
@@ -59,7 +60,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
-        process.env.PIVATE_KEY,
+        process.env.PRIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
@@ -92,7 +93,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: user._id, email: user.email },
-        process.env.PIVATE_KEY,
+        process.env.PRIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
@@ -140,7 +141,7 @@ export class UsersService {
     return {
       accessToken: jwt.sign(
         { id: newUser._id, email: newUser.email },
-        process.env.PIVATE_KEY,
+        process.env.PRIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
       tokenType: 'Bearer',
@@ -167,7 +168,30 @@ export class UsersService {
     const storedUser = await this.UserModel.findById(id);
     storedUser.lastName = User.lastName;
     storedUser.firstName = User.firstName;
+
+    if (User.oldPassword && User.newPassword) {
+      await this.changeUserPassword(id, User.oldPassword, User.newPassword);
+    }
+
     return await storedUser.save();
+  }
+
+  async changeUserPassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<HTTPError | object> {
+    const user = await this.UserModel.findById(userId);
+    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isPasswordValid) {
+      throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+
+    await user.save();
+    return { code: HttpStatus.OK, message: 'Password updated' };
   }
 
   async requestPasswordReset(data: object): Promise<HTTPError | object> {

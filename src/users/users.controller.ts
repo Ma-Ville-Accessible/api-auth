@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
   Put,
+  BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
@@ -79,6 +80,15 @@ export class UsersController {
     @Param('id') id: string,
     @Body() User: UpdateUserDto,
   ): Promise<HTTPError | User> {
+    if (User.oldPassword && User.newPassword) {
+      if (User.oldPassword === User.newPassword) {
+        throw new BadRequestException('Change password exception', {
+          cause: new Error(),
+          description: "You can't use the same password.",
+        });
+      }
+    }
+
     return this.usersService.updateUser(id, User);
   }
 

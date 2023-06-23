@@ -23,7 +23,7 @@ export class User {
   @Prop({ unique: true })
   refreshToken: string;
 
-  @Prop({ unique: true })
+  @Prop()
   otaCode: string;
 
   @Prop({ default: false })
