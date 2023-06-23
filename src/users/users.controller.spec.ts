@@ -23,15 +23,15 @@ describe('UsersController', () => {
     create: jest.fn(),
   };
 
-  const mockData = [
-    {
-      _id: new Types.ObjectId().toString(),
-      firstName: 'john',
-      lastName: 'doe',
-      email: 'john@doe.fr',
-      isVerified: true,
-    },
-  ];
+  const mockedUser = {
+    _id: new Types.ObjectId().toString(),
+    firstName: 'john',
+    lastName: 'doe',
+    email: 'john@doe.fr',
+    isVerified: true,
+    refreshToken: 'refreshToken',
+    save,
+  };
 
   jest.mock('@sendgrid/mail');
 
@@ -57,15 +57,15 @@ describe('UsersController', () => {
 
   describe('get(:userId)', () => {
     it('should return specific user', async () => {
-      mockedUserModel.findById.mockReturnValue(mockData[0]);
-      expect(await usersController.getUser(mockData[0]._id)).toStrictEqual({
-        id: mockData[0]._id,
+      mockedUserModel.findById.mockReturnValue(mockedUser);
+      expect(await usersController.getUser(mockedUser._id)).toStrictEqual({
+        id: mockedUser._id,
         firstName: 'john',
         lastName: 'doe',
         email: 'john@doe.fr',
         isVerified: true,
       });
-      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockData[0]._id);
+      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
     });
 
     it('should return "Invalid ID" error', async () => {
@@ -85,7 +85,7 @@ describe('UsersController', () => {
       mockedUserModel.findById.mockReturnValue(null);
       let error;
       try {
-        await usersController.getUser(mockData[0]._id);
+        await usersController.getUser(mockedUser._id);
       } catch (e) {
         error = e;
       }
@@ -98,12 +98,7 @@ describe('UsersController', () => {
 
   describe('createUser()', () => {
     it('should create a User', async () => {
-      mockedUserModel.create.mockImplementationOnce(() => ({
-        save,
-        _id: 'userId',
-        email: 'simon.deflesschouwer@mmibordeaux.com',
-        refreshToken: 'refreshToken',
-      }));
+      mockedUserModel.create.mockImplementationOnce(() => mockedUser);
       mockedUserModel.findOne.mockReturnValue(null);
       const request = await usersController.createUser({
         email: 'simon.deflesschouwer@mmibordeaux.com',
@@ -117,7 +112,7 @@ describe('UsersController', () => {
         request.accessToken,
         process.env.PIVATE_KEY,
       );
-      expect(tokenContent.id).toBe('userId');
+      expect(tokenContent.id).toBe(mockedUser._id);
       expect(request.refreshToken).toBe('refreshToken');
       //add test for sendgri email
     });
@@ -325,14 +320,10 @@ describe('UsersController', () => {
 
   describe('verifyUser(:id)', () => {
     it('should set user status as verified', async () => {
-      const save = jest.fn();
-      mockedUserModel.findById.mockReturnValueOnce({
-        save,
-        _id: 'userId',
-      });
-      const request = await usersController.verifyUser('userId');
+      mockedUserModel.findById.mockReturnValueOnce(mockedUser);
+      const request = await usersController.verifyUser(mockedUser._id);
 
-      expect(mockedUserModel.findById).toBeCalledWith('userId');
+      expect(mockedUserModel.findById).toBeCalledWith(mockedUser._id);
       expect(save).toBeCalledTimes(1);
       expect(request.message).toBe('User validated');
     });
@@ -340,7 +331,7 @@ describe('UsersController', () => {
       let error;
       mockedUserModel.findById.mockReturnValueOnce(null);
       try {
-        await usersController.verifyUser('userId');
+        await usersController.verifyUser(mockedUser._id);
       } catch (e) {
         error = e;
       }
@@ -387,10 +378,13 @@ describe('UsersController', () => {
         save,
         _id: 'userId',
       });
-      const { message } = await usersController.updateUserPassword('userId', {
-        password: 'password',
-        passwordRepeat: 'password',
-      });
+      const { message } = await usersController.updateUserPassword(
+        mockedUser._id,
+        {
+          password: 'password',
+          passwordRepeat: 'password',
+        },
+      );
 
       expect(message).toBe('Password updated');
       expect(bcrypt.hash).toBeCalledWith('password', 10);
@@ -403,7 +397,7 @@ describe('UsersController', () => {
       try {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore:
-        await usersController.updateUserPassword('userId', {
+        await usersController.updateUserPassword(mockedUser._id, {
           password: 'password',
         });
       } catch (e) {
@@ -423,7 +417,7 @@ describe('UsersController', () => {
       let error;
 
       try {
-        await usersController.updateUserPassword('userId', {
+        await usersController.updateUserPassword(mockedUser._id, {
           password: 'password',
           passwordRepeat: 'wrong password',
         });
@@ -450,10 +444,10 @@ describe('UsersController', () => {
         lastName: 'oldLastName',
       });
       save.mockResolvedValueOnce(user);
-      expect(await usersController.updateUser('test', user)).toStrictEqual(
-        user,
-      );
-      expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
+      expect(
+        await usersController.updateUser(mockedUser._id, user),
+      ).toStrictEqual(user);
+      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
     });
   });
 });
