@@ -157,7 +157,17 @@ export class UsersService {
 
   async updateUser(id: string, User: UpdateUserDto): Promise<HTTPError | User> {
     const storedUser = await this.UserModel.findById(id);
-    if (User.oldPassword && User.newPassword) {
+    if (!storedUser) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    if (User.oldPassword) {
+      if (User.newPassword !== User.newPasswordRepeat) {
+        throw new HttpException(
+          'New password and confirmation do not match',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const isPasswordValid = await bcrypt.compare(
         User.oldPassword,
         storedUser.password,
@@ -167,11 +177,11 @@ export class UsersService {
         throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
       }
 
-      storedUser.lastName = User.lastName;
-      storedUser.firstName = User.firstName;
       storedUser.password = await bcrypt.hash(User.newPassword, 10);
     }
 
+    storedUser.lastName = User.lastName || storedUser.lastName;
+    storedUser.firstName = User.firstName || storedUser.firstName;
     return await storedUser.save();
   }
 
