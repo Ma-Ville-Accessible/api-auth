@@ -10,7 +10,6 @@ import { User } from '../core/schemas/users.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { isJWT } from 'class-validator';
-
 describe('UsersController', () => {
   let usersController: UsersController;
 
@@ -24,19 +23,19 @@ describe('UsersController', () => {
     create: jest.fn(),
   };
 
-  const mockData = [
-    {
-      _id: new Types.ObjectId().toString(),
-      firstName: 'john',
-      lastName: 'doe',
-      email: 'john@doe.fr',
-      isVerified: true,
-    },
-  ];
+  const mockedUser = {
+    _id: new Types.ObjectId().toString(),
+    firstName: 'john',
+    lastName: 'doe',
+    email: 'john@doe.fr',
+    isVerified: true,
+    refreshToken: 'refreshToken',
+    save,
+  };
 
   jest.mock('@sendgrid/mail');
 
-  process.env.PIVATE_KEY = 'test';
+  process.env.PRIVATE_KEY = 'test';
   process.env.ENV = 'test';
 
   beforeEach(async () => {
@@ -58,15 +57,15 @@ describe('UsersController', () => {
 
   describe('get(:userId)', () => {
     it('should return specific user', async () => {
-      mockedUserModel.findById.mockReturnValue(mockData[0]);
-      expect(await usersController.getUser(mockData[0]._id)).toStrictEqual({
-        id: mockData[0]._id,
+      mockedUserModel.findById.mockReturnValue(mockedUser);
+      expect(await usersController.getUser(mockedUser._id)).toStrictEqual({
+        id: mockedUser._id,
         firstName: 'john',
         lastName: 'doe',
         email: 'john@doe.fr',
         isVerified: true,
       });
-      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockData[0]._id);
+      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
     });
 
     it('should return "Invalid ID" error', async () => {
@@ -86,7 +85,7 @@ describe('UsersController', () => {
       mockedUserModel.findById.mockReturnValue(null);
       let error;
       try {
-        await usersController.getUser(mockData[0]._id);
+        await usersController.getUser(mockedUser._id);
       } catch (e) {
         error = e;
       }
@@ -99,12 +98,7 @@ describe('UsersController', () => {
 
   describe('createUser()', () => {
     it('should create a User', async () => {
-      mockedUserModel.create.mockImplementationOnce(() => ({
-        save,
-        _id: 'userId',
-        email: 'simon.deflesschouwer@mmibordeaux.com',
-        refreshToken: 'refreshToken',
-      }));
+      mockedUserModel.create.mockImplementationOnce(() => mockedUser);
       mockedUserModel.findOne.mockReturnValue(null);
       const request = await usersController.createUser({
         email: 'simon.deflesschouwer@mmibordeaux.com',
@@ -116,9 +110,9 @@ describe('UsersController', () => {
       expect(isJWT(request.accessToken)).toBeTruthy();
       const tokenContent = jwt.verify(
         request.accessToken,
-        process.env.PIVATE_KEY,
+        process.env.PRIVATE_KEY,
       );
-      expect(tokenContent.id).toBe('userId');
+      expect(tokenContent.id).toBe(mockedUser._id);
       expect(request.refreshToken).toBe('refreshToken');
       //add test for sendgri email
     });
@@ -153,12 +147,16 @@ describe('UsersController', () => {
           lastName: 'test',
         });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing fields', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('password');
+      expect(error[0].errors).toStrictEqual([
+        'password is too short',
+        'password should not be empty',
+        'password must be a string',
+      ]);
     });
   });
 
@@ -166,20 +164,28 @@ describe('UsersController', () => {
     it('throw an error if the grantType is missing', async () => {
       let error;
       try {
-        await usersController.signIn({});
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore:
+        await usersController.signIn({
+          email: 'a@a.fr',
+        });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing grantType', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('grantType');
+      expect(error[0].errors).toStrictEqual([
+        'grantType should not be empty',
+        'grantType must be a string',
+      ]);
     });
     it('throw an error if the grantType is incorrect', async () => {
       let error;
       try {
         await usersController.signIn({
           grantType: 'invalid grant type',
+          email: 'a@a.fr',
         });
       } catch (e) {
         error = e;
@@ -201,12 +207,13 @@ describe('UsersController', () => {
         const request = await usersController.signIn({
           grantType: 'password',
           password,
+          email: 'user@test.fr',
         });
         expect(request.user.id).toBe('userId');
         expect(isJWT(request.accessToken)).toBeTruthy();
         const tokenContent = jwt.verify(
           request.accessToken,
-          process.env.PIVATE_KEY,
+          process.env.PRIVATE_KEY,
         );
         expect(tokenContent.id).toBe('userId');
       });
@@ -216,6 +223,8 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'password',
+            email: 'user@test.fr',
+            password: 'password',
           });
         } catch (e) {
           error = e;
@@ -235,6 +244,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'password',
+            email: 'user@test.fr',
             password: 'wrong password',
           });
         } catch (e) {
@@ -265,7 +275,7 @@ describe('UsersController', () => {
         expect(isJWT(request.accessToken)).toBeTruthy();
         const tokenContent = jwt.verify(
           request.accessToken,
-          process.env.PIVATE_KEY,
+          process.env.PRIVATE_KEY,
         );
         expect(tokenContent.id).toBe('userId');
         expect(request.refreshToken).not.toBe('refreshToken');
@@ -276,6 +286,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'refreshToken',
+            refreshToken: 'refreshToken',
           });
         } catch (e) {
           error = e;
@@ -294,7 +305,7 @@ describe('UsersController', () => {
         try {
           await usersController.signIn({
             grantType: 'refreshToken',
-            password: 'wrong refresh token',
+            refreshToken: 'wrong refresh token',
           });
         } catch (e) {
           error = e;
@@ -309,14 +320,10 @@ describe('UsersController', () => {
 
   describe('verifyUser(:id)', () => {
     it('should set user status as verified', async () => {
-      const save = jest.fn();
-      mockedUserModel.findById.mockReturnValueOnce({
-        save,
-        _id: 'userId',
-      });
-      const request = await usersController.verifyUser('userId');
+      mockedUserModel.findById.mockReturnValueOnce(mockedUser);
+      const request = await usersController.verifyUser(mockedUser._id);
 
-      expect(mockedUserModel.findById).toBeCalledWith('userId');
+      expect(mockedUserModel.findById).toBeCalledWith(mockedUser._id);
       expect(save).toBeCalledTimes(1);
       expect(request.message).toBe('User validated');
     });
@@ -324,7 +331,7 @@ describe('UsersController', () => {
       let error;
       mockedUserModel.findById.mockReturnValueOnce(null);
       try {
-        await usersController.verifyUser('userId');
+        await usersController.verifyUser(mockedUser._id);
       } catch (e) {
         error = e;
       }
@@ -371,10 +378,13 @@ describe('UsersController', () => {
         save,
         _id: 'userId',
       });
-      const { message } = await usersController.updateUserPassword('userId', {
-        password: 'password',
-        passwordRepeat: 'password',
-      });
+      const { message } = await usersController.updateUserPassword(
+        mockedUser._id,
+        {
+          password: 'password',
+          passwordRepeat: 'password',
+        },
+      );
 
       expect(message).toBe('Password updated');
       expect(bcrypt.hash).toBeCalledWith('password', 10);
@@ -387,23 +397,27 @@ describe('UsersController', () => {
       try {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore:
-        await usersController.updateUserPassword('userId', {
+        await usersController.updateUserPassword(mockedUser._id, {
           password: 'password',
         });
       } catch (e) {
-        error = e;
+        error = e.response.errors;
       }
 
-      expect(error).toStrictEqual(
-        new HttpException('Missing fields', HttpStatus.BAD_REQUEST),
-      );
+      expect(error.length).toBe(1);
+      expect(error[0].field).toBe('passwordRepeat');
+      expect(error[0].errors).toStrictEqual([
+        'passwordRepeat is too short',
+        'passwordRepeat should not be empty',
+        'passwordRepeat must be a string',
+      ]);
     });
 
     it('should throw an error if the two passwords mismatch', async () => {
       let error;
 
       try {
-        await usersController.updateUserPassword('userId', {
+        await usersController.updateUserPassword(mockedUser._id, {
           password: 'password',
           passwordRepeat: 'wrong password',
         });
@@ -430,10 +444,10 @@ describe('UsersController', () => {
         lastName: 'oldLastName',
       });
       save.mockResolvedValueOnce(user);
-      expect(await usersController.updateUser('test', user)).toStrictEqual(
-        user,
-      );
-      expect(mockedUserModel.findById).toHaveBeenCalledWith('test');
+      expect(
+        await usersController.updateUser(mockedUser._id, user),
+      ).toStrictEqual(user);
+      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
     });
   });
 });

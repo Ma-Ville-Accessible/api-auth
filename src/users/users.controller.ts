@@ -8,6 +8,8 @@ import {
   Post,
   UseGuards,
   Put,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
@@ -19,13 +21,14 @@ import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './Dto/update-user.dto';
 import { ForgottenPasswordDto } from './Dto/forgotten-password.dto';
 import { PasswordChangeDto } from './Dto/password-change.dto';
-import { RequestPasswordDto } from './Dto/request-password.dto';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { AuthenticateUserDto } from './Dto/authenticate-user.dto';
 import { createExample } from '../swagger/users/create.example';
 import { updateExample } from '../swagger/users/update.example';
 import { authenticateExample } from '../swagger/users/authenticate.example';
 import { UsersService } from './users.service';
+import { validateBody } from 'src/core/utils/validation';
+import { Types } from 'mongoose';
 
 @Controller('users')
 export class UsersController {
@@ -34,6 +37,9 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get(':id')
   getUser(@Param('id') id: string): Promise<object> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     return this.usersService.getOneUser(id);
   }
 
@@ -46,8 +52,9 @@ export class UsersController {
       example: createExample,
     },
   })
-  createUser(@Body() User: CreateUserDto): Promise<HTTPError | any> {
-    return this.usersService.createUser(User);
+  async createUser(@Body() body: CreateUserDto): Promise<HTTPError | any> {
+    const user: CreateUserDto = await validateBody(body, CreateUserDto);
+    return this.usersService.createUser(user);
   }
 
   @HttpCode(200)
@@ -61,8 +68,9 @@ export class UsersController {
       example: authenticateExample,
     },
   })
-  signIn(@Body() UserData: object): Promise<HTTPError | any> {
-    return this.usersService.signIn(UserData);
+  async signIn(@Body() body: AuthenticateUserDto): Promise<HTTPError | any> {
+    const data = await validateBody(body, AuthenticateUserDto);
+    return this.usersService.signIn(data);
   }
 
   @UseGuards(AuthGuard)
@@ -75,11 +83,15 @@ export class UsersController {
       example: updateExample,
     },
   })
-  updateUser(
+  async updateUser(
     @Param('id') id: string,
-    @Body() User: UpdateUserDto,
+    @Body() body: UpdateUserDto,
   ): Promise<HTTPError | User> {
-    return this.usersService.updateUser(id, User);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
+    const data = await validateBody(body, UpdateUserDto);
+    return this.usersService.updateUser(id, data);
   }
 
   @Post('password')
@@ -93,9 +105,10 @@ export class UsersController {
       },
     },
   })
-  requestPasswordReset(
-    @Body() data: RequestPasswordDto,
+  async requestPasswordReset(
+    @Body() body: ForgottenPasswordDto,
   ): Promise<HTTPError | any> {
+    const data = await validateBody(body, ForgottenPasswordDto);
     return this.usersService.requestPasswordReset(data);
   }
 
@@ -114,17 +127,24 @@ export class UsersController {
       },
     },
   })
-  updateUserPassword(
+  async updateUserPassword(
     @Param('id') id: string,
     @Body() body: PasswordChangeDto,
   ): Promise<HTTPError | any> {
-    return this.usersService.updateUserPassword(id, body);
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
+    const data = await validateBody(body, PasswordChangeDto);
+    return this.usersService.updateUserPassword(id, data);
   }
 
   @UseGuards(OtaGuard)
   @Get(':id/validate')
   // create return message type
   verifyUser(@Param('id') id: string): Promise<HTTPError | any> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
+    }
     return this.usersService.verifyUser(id);
   }
 }
