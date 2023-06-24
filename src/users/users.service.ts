@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import * as Crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
@@ -28,9 +28,6 @@ export class UsersService {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
   async getOneUser(id: string): Promise<object> {
-    if (!Types.ObjectId.isValid(id)) {
-      throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
-    }
     const User = await this.UserModel.findById(id);
     if (!User) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -113,9 +110,6 @@ export class UsersService {
     if (user) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
     }
-    if (!User.firstName || !User.lastName || !User.email || !User.password) {
-      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
-    }
     const cryptedPassword = await bcrypt.hash(User.password, 10);
     const newUser = await this.UserModel.create({
       ...User,
@@ -151,9 +145,6 @@ export class UsersService {
   }
 
   async signIn(UserData: any): Promise<HTTPError | object> {
-    if (!UserData?.grantType) {
-      throw new HttpException('Missing grantType', HttpStatus.BAD_REQUEST);
-    }
     switch (UserData.grantType) {
       case 'password':
         return this.authWithPassword(UserData);
@@ -210,9 +201,6 @@ export class UsersService {
     id: string,
     body: object,
   ): Promise<HTTPError | object> {
-    if (!body['password'] || !body['passwordRepeat']) {
-      throw new HttpException('Missing fields', HttpStatus.BAD_REQUEST);
-    }
     const user = await this.UserModel.findById(id);
     if (body['password'] !== body['passwordRepeat']) {
       throw new HttpException('Passwords mismatch', HttpStatus.BAD_REQUEST);

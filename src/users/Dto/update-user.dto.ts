@@ -1,19 +1,26 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ValidateIf, IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class UpdateUserDto {
   @IsString()
-  @IsNotEmpty()
-  firstName: string;
-
-  @IsString()
-  @IsNotEmpty()
-  lastName: string;
+  @IsOptional()
+  firstName?: string;
 
   @IsString()
   @IsOptional()
+  lastName?: string;
+
+  @ValidateIf((o) => !!o.newPassword)
+  @IsString()
+  @IsNotEmpty()
   oldPassword?: string;
 
+  @ValidateIf((o) => !!o.oldPassword)
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   newPassword?: string;
+
+  @ValidateIf((o) => !!o.newPassword)
+  @IsString()
+  @IsNotEmpty()
+  newPasswordRepeat?: string;
 }
