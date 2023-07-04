@@ -1,9 +1,9 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   HttpException,
   HttpStatus,
+  Injectable,
 } from '@nestjs/common';
 import { User, UserDocument } from '../schemas/users.schema';
 import * as jwt from 'jsonwebtoken';

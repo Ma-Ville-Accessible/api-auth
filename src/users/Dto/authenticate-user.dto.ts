@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEmail, ValidateIf } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
 
 export class AuthenticateUserDto {
   @ValidateIf((o) => o.grantType === 'password')
