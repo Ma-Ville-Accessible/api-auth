@@ -373,7 +373,7 @@ describe('UsersController', () => {
 
   describe('updateUserPassword()', () => {
     it('should update the user password', async () => {
-      bcrypt.hash = jest.fn();
+      jest.spyOn(bcrypt, 'hash');
       mockedUserModel.findById.mockReturnValueOnce({
         save,
         _id: 'userId',
@@ -389,6 +389,7 @@ describe('UsersController', () => {
       expect(message).toBe('Password updated');
       expect(bcrypt.hash).toBeCalledWith('password', 10);
       expect(save).toHaveBeenCalled();
+      bcrypt.hash.mockRestore();
     });
 
     it('should throw an error if a field is missing', async () => {
@@ -432,7 +433,7 @@ describe('UsersController', () => {
   });
 
   describe('update(:id)', () => {
-    it('should update a User', async () => {
+    it('should update a User without a new password', async () => {
       const user = {
         lastName: 'lastName',
         firstName: 'firstName',
@@ -448,6 +449,92 @@ describe('UsersController', () => {
         await usersController.updateUser(mockedUser._id, user),
       ).toStrictEqual(user);
       expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
+    });
+
+    it('should update a User with a new password', async () => {
+      const password = await bcrypt.hash('password', 10);
+      bcrypt.hash = jest.fn();
+
+      mockedUserModel.findById.mockReturnValueOnce({
+        ...mockedUser,
+        password,
+      });
+
+      save.mockResolvedValueOnce({ ...mockedUser, password: 'newPassword' });
+
+      const request = await usersController.updateUser(mockedUser._id, {
+        oldPassword: 'password',
+        newPassword: 'newPassword',
+        newPasswordRepeat: 'newPassword',
+      });
+
+      expect(request).toStrictEqual({ ...mockedUser, password: 'newPassword' });
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword', 10);
+      expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
+    });
+
+    it('should throw an error if the id is invalid', async () => {
+      let error;
+
+      try {
+        await usersController.updateUser('invalidId', {
+          firstName: 'firstName',
+        });
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).toStrictEqual(
+        new HttpException('Invalid ID', HttpStatus.BAD_REQUEST),
+      );
+      expect(mockedUserModel.findById).toHaveBeenCalledTimes(0);
+    });
+
+    it('should throw an error if the user is not found', async () => {
+      let error;
+
+      mockedUserModel.findById.mockReturnValueOnce(null);
+
+      try {
+        await usersController.updateUser(mockedUser._id, {
+          firstName: 'firstName',
+        });
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).toStrictEqual(
+        new HttpException('User not found', HttpStatus.NOT_FOUND),
+      );
+      expect(mockedUserModel.findById).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw an error if the password mismatch', async () => {
+      let error;
+
+      mockedUserModel.findById.mockReturnValueOnce({
+        ...mockedUser,
+        password: 'oldPassword',
+      });
+
+      try {
+        await usersController.updateUser(mockedUser._id, {
+          firstName: 'firstName',
+          newPassword: 'newPassword',
+          newPasswordRepeat: 'wrongPassword',
+          oldPassword: 'oldPassword',
+        });
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).toStrictEqual(
+        new HttpException(
+          'New password and confirmation do not match',
+          HttpStatus.BAD_REQUEST,
+        ),
+      );
+      expect(mockedUserModel.findById).toHaveBeenCalledTimes(1);
     });
   });
 });
