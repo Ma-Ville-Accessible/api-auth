@@ -26,6 +26,7 @@ export class UsersService {
     require.resolve('../../assets/templates/forgottenPassword.handlebars'),
     'utf-8',
   );
+
   constructor(
     @InjectModel(User.name) private UserModel: Model<UserDocument>,
     private readonly httpService: HttpService,
