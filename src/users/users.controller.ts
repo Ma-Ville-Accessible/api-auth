@@ -10,6 +10,7 @@ import {
   Put,
   HttpException,
   HttpStatus,
+  Delete,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
@@ -146,5 +147,21 @@ export class UsersController {
       throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
     }
     return this.usersService.verifyUser(id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(':userId')
+  async deleteUserAccount(
+    @Param('userId') userId: string,
+  ): Promise<HTTPError | any> {
+    console.log('coucou');
+
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new HttpException(
+        `Invalid userId: ${userId}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    return this.usersService.deleteUserAccount(userId);
   }
 }
