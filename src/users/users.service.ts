@@ -13,6 +13,8 @@ import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { UpdateUserDto } from './Dto/update-user.dto';
+import * as process from 'process';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class UsersService {
@@ -25,7 +27,10 @@ export class UsersService {
     'utf-8',
   );
 
-  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private UserModel: Model<UserDocument>,
+    private readonly httpService: HttpService,
+  ) {}
 
   async getOneUser(id: string): Promise<object> {
     const User = await this.UserModel.findById(id);
@@ -229,5 +234,22 @@ export class UsersService {
     user.isVerified = true;
     await user.save();
     return { message: 'User validated' };
+  }
+
+  async deleteUserAccount(id: string) {
+    const user = await this.UserModel.findById(id);
+
+    const updateReportsWithDeletedUserIdUrl = `${process.env.SERVICE_REPORTS_URL}/user/${id}`;
+
+    try {
+      await this.httpService.put(updateReportsWithDeletedUserIdUrl);
+    } catch (error) {
+      throw new HttpException(
+        `An error has occurred: ${error}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    user.deleteOne({ _id: id });
   }
 }
