@@ -56,7 +56,7 @@ export class UsersService {
 
     return {
       accessToken: jwt.sign(
-        { id: user._id, email: user.email },
+        { id: user._id, email: user.email, role: user.role },
         process.env.PRIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
@@ -69,6 +69,7 @@ export class UsersService {
         firstName: user.firstName,
         lastName: user.lastName,
         isVerified: user.isVerified,
+        role: user.role,
       },
     };
   }
@@ -89,7 +90,7 @@ export class UsersService {
     await user.save();
     return {
       accessToken: jwt.sign(
-        { id: user._id, email: user.email },
+        { id: user._id, email: user.email, role: user.role },
         process.env.PRIVATE_KEY,
         { expiresIn: '9000000s' },
       ),
@@ -101,6 +102,7 @@ export class UsersService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     };
   }
