@@ -7,11 +7,18 @@ import { UsersService } from './users.service';
 import { User, UserSchema } from '../core/schemas/users.schema';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import {
+  Institution,
+  InstitutionSchema,
+} from 'src/core/schemas/institution.schema';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Institution.name, schema: InstitutionSchema },
+    ]),
     ThrottlerModule.forRoot(),
   ],
   controllers: [UsersController],

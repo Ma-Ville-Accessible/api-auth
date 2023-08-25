@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
     return this.validateRequest(request);
   }
 
-  private validateRequest = async (req): Promise<boolean> => {
+  private validateRequest = async (req: any): Promise<boolean> => {
     try {
       if (!req.headers.authorization) {
         throw new HttpException(
@@ -35,10 +35,10 @@ export class AuthGuard implements CanActivate {
           'Unauthorized request',
           HttpStatus.UNAUTHORIZED,
         );
-      } else {
-        req.user = user;
-        return true;
       }
+
+      req.user = user;
+      return true;
     } catch (error) {
       throw new HttpException('Unauthorized request', HttpStatus.UNAUTHORIZED);
     }

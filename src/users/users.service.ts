@@ -13,6 +13,10 @@ import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { UpdateUserDto } from './Dto/update-user.dto';
+import {
+  Institution,
+  InstitutionDocument,
+} from 'src/core/schemas/institution.schema';
 
 @Injectable()
 export class UsersService {
@@ -25,7 +29,11 @@ export class UsersService {
     'utf-8',
   );
 
-  constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private UserModel: Model<UserDocument>,
+    @InjectModel(Institution.name)
+    private InstitutionModel: Model<InstitutionDocument>,
+  ) {}
 
   async getOneUser(id: string): Promise<object> {
     const User = await this.UserModel.findById(id);
@@ -54,6 +62,10 @@ export class UsersService {
       throw new HttpException('Invalid credentials', HttpStatus.FORBIDDEN);
     }
 
+    const institution = await this.InstitutionModel.findOne({
+      owner: user._id,
+    });
+
     return {
       accessToken: jwt.sign(
         { id: user._id, email: user.email, role: user.role },
@@ -64,6 +76,7 @@ export class UsersService {
       expiresIn: 9000000,
       refreshToken: user.refreshToken,
       user: {
+        ...(institution && { institution }),
         id: user._id,
         email: user.email,
         firstName: user.firstName,
