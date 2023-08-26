@@ -15,6 +15,9 @@ export class Institution {
 
   @Prop({ unique: true })
   geoRef: string;
+
+  @Prop({ unique: true })
+  apiKey: string;
 }
 
 export const InstitutionSchema = SchemaFactory.createForClass(Institution);

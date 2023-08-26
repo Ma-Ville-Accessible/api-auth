@@ -1,6 +1,11 @@
 import { readFileSync } from 'fs';
 
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as Crypto from 'crypto';
@@ -49,7 +54,10 @@ export class UsersService {
     };
   }
 
-  private async authWithPassword(UserData: any): Promise<HTTPError | object> {
+  private async authWithPassword(
+    host: string,
+    UserData: any,
+  ): Promise<HTTPError | object> {
     const user = await this.UserModel.findOne({ email: UserData.email });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -65,6 +73,10 @@ export class UsersService {
     const institution = await this.InstitutionModel.findOne({
       owner: user._id,
     });
+
+    if (host === process.env.DASHBOARD_URL && !institution) {
+      throw new ForbiddenException('Unauthorized request');
+    }
 
     return {
       accessToken: jwt.sign(
@@ -159,10 +171,10 @@ export class UsersService {
     };
   }
 
-  async signIn(UserData: any): Promise<HTTPError | object> {
+  async signIn(host: string, UserData: any): Promise<HTTPError | object> {
     switch (UserData.grantType) {
       case 'password':
-        return this.authWithPassword(UserData);
+        return this.authWithPassword(host, UserData);
       case 'refreshToken':
         return this.authWithRefreshToken(UserData);
       default:
@@ -170,7 +182,10 @@ export class UsersService {
     }
   }
 
-  async updateUser(id: string, User: UpdateUserDto): Promise<HTTPError | User> {
+  async updateUser(
+    id: string,
+    User: UpdateUserDto,
+  ): Promise<HTTPError | object> {
     const storedUser = await this.UserModel.findById(id);
     if (!storedUser) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -197,7 +212,12 @@ export class UsersService {
 
     storedUser.lastName = User.lastName || storedUser.lastName;
     storedUser.firstName = User.firstName || storedUser.firstName;
-    return await storedUser.save();
+    await storedUser.save();
+
+    return {
+      firstName: storedUser.firstName,
+      lastName: storedUser.lastName,
+    };
   }
 
   async requestPasswordReset(data: object): Promise<HTTPError | object> {

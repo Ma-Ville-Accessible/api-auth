@@ -28,7 +28,6 @@ export class OtaGuard implements CanActivate {
       }
       const otaCode = req.headers.authorization.split(' ')[1];
       const userId = req.params.id;
-
       const user = await this.UserModel.findOne({ _id: userId });
       if (!user.otaCode || user.otaCode !== otaCode) {
         user.otaCode = null;

@@ -23,7 +23,6 @@ export const send = async (
       html,
     });
   } catch (error) {
-    console.log(error);
     throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

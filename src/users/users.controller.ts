@@ -10,13 +10,13 @@ import {
   Put,
   HttpException,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 
 import { AuthGuard } from 'src/core/guards/auth.guard';
 import { OtaGuard } from 'src/core/guards/ota.guard';
 import { HTTPError } from '../core/interfaces/Error';
-import { User } from '../core/schemas/users.schema';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './Dto/update-user.dto';
 import { ForgottenPasswordDto } from './Dto/forgotten-password.dto';
@@ -68,9 +68,12 @@ export class UsersController {
       example: authenticateExample,
     },
   })
-  async signIn(@Body() body: AuthenticateUserDto): Promise<HTTPError | any> {
+  async signIn(
+    @Body() body: AuthenticateUserDto,
+    @Headers('host') host: string,
+  ): Promise<HTTPError | any> {
     const data = await validateBody(body, AuthenticateUserDto);
-    return this.usersService.signIn(data);
+    return this.usersService.signIn(host, data);
   }
 
   @UseGuards(AuthGuard)
@@ -86,7 +89,7 @@ export class UsersController {
   async updateUser(
     @Param('id') id: string,
     @Body() body: UpdateUserDto,
-  ): Promise<HTTPError | User> {
+  ): Promise<HTTPError | object> {
     if (!Types.ObjectId.isValid(id)) {
       throw new HttpException('Invalid ID', HttpStatus.BAD_REQUEST);
     }
