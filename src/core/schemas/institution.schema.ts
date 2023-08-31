@@ -11,10 +11,10 @@ export class Institution {
   name: string;
 
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
-  reportId: User;
+  owner: User;
 
   @Prop({ unique: true })
-  geoRef: string;
+  geoRef: number[];
 
   @Prop({ unique: true })
   apiKey: string;
