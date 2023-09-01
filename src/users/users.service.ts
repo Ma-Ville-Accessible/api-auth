@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Injectable,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -62,6 +63,11 @@ export class UsersService {
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('User not verified');
+    }
+
     const isPasswordValid = await bcrypt.compare(
       UserData.password,
       user.password,
@@ -71,7 +77,7 @@ export class UsersService {
     }
 
     const institution = await this.InstitutionModel.findOne({
-      owner: user._id,
+      owner: user,
     });
 
     if (host === process.env.DASHBOARD_URL && !institution) {
