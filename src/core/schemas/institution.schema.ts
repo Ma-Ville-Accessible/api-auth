@@ -10,7 +10,7 @@ export class Institution {
   @Prop({ unique: true, required: true })
   name: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  @Prop({ unique: true, type: mongoose.Schema.Types.ObjectId, ref: 'User' })
   owner: User;
 
   @Prop({ unique: true })
