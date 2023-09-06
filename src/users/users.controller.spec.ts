@@ -1,7 +1,11 @@
 import { Types } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException, HttpStatus } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import * as sgMail from '@sendgrid/mail';
@@ -10,6 +14,7 @@ import { User } from '../core/schemas/users.schema';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { isJWT } from 'class-validator';
+import { Institution } from 'src/core/schemas/institution.schema';
 describe('UsersController', () => {
   let usersController: UsersController;
 
@@ -21,6 +26,11 @@ describe('UsersController', () => {
     findById: jest.fn(),
     findByIdAndDelete: jest.fn(),
     create: jest.fn(),
+  };
+
+  const mockedInstitutionModel = {
+    find: jest.fn(),
+    findOne: jest.fn(),
   };
 
   const mockedUser = {
@@ -44,6 +54,10 @@ describe('UsersController', () => {
       providers: [
         UsersService,
         { provide: getModelToken(User.name), useValue: mockedUserModel },
+        {
+          provide: getModelToken(Institution.name),
+          useValue: mockedInstitutionModel,
+        },
       ],
     }).compile();
 
@@ -183,10 +197,10 @@ describe('UsersController', () => {
     it('throw an error if the grantType is incorrect', async () => {
       let error;
       try {
-        await usersController.signIn({
-          grantType: 'invalid grant type',
-          email: 'a@a.fr',
-        });
+        await usersController.signIn(
+          { grantType: 'invalid grant type', email: 'a@a.fr' },
+          'host',
+        );
       } catch (e) {
         error = e;
       }
@@ -202,13 +216,17 @@ describe('UsersController', () => {
         const cryptedPassword = await bcrypt.hash(password, 10);
         mockedUserModel.findOne.mockReturnValueOnce({
           password: cryptedPassword,
+          isVerified: true,
           _id: 'userId',
         });
-        const request = await usersController.signIn({
-          grantType: 'password',
-          password,
-          email: 'user@test.fr',
-        });
+        const request = await usersController.signIn(
+          {
+            grantType: 'password',
+            password,
+            email: 'user@test.fr',
+          },
+          'host',
+        );
         expect(request.user.id).toBe('userId');
         expect(isJWT(request.accessToken)).toBeTruthy();
         const tokenContent = jwt.verify(
@@ -217,15 +235,44 @@ describe('UsersController', () => {
         );
         expect(tokenContent.id).toBe('userId');
       });
+      it('should not sign in an unverified user', async () => {
+        let error;
+        const password = 'password';
+        const cryptedPassword = await bcrypt.hash(password, 10);
+        mockedUserModel.findOne.mockReturnValueOnce({
+          password: cryptedPassword,
+          isVerified: false,
+          _id: 'userId',
+        });
+        try {
+          await usersController.signIn(
+            {
+              grantType: 'password',
+              password,
+              email: 'user@test.fr',
+            },
+            'host',
+          );
+        } catch (e) {
+          error = e;
+        }
+
+        expect(error).toStrictEqual(
+          new UnauthorizedException('User not verified'),
+        );
+      });
       it('should throw an error if the user is not found', async () => {
         let error;
         mockedUserModel.findOne.mockReturnValueOnce(null);
         try {
-          await usersController.signIn({
-            grantType: 'password',
-            email: 'user@test.fr',
-            password: 'password',
-          });
+          await usersController.signIn(
+            {
+              grantType: 'password',
+              email: 'user@test.fr',
+              password: 'password',
+            },
+            'host',
+          );
         } catch (e) {
           error = e;
         }
@@ -239,14 +286,18 @@ describe('UsersController', () => {
         const cryptedPassword = await bcrypt.hash('real password', 10);
         mockedUserModel.findOne.mockReturnValueOnce({
           password: cryptedPassword,
+          isVerified: true,
           _id: 'userId',
         });
         try {
-          await usersController.signIn({
-            grantType: 'password',
-            email: 'user@test.fr',
-            password: 'wrong password',
-          });
+          await usersController.signIn(
+            {
+              grantType: 'password',
+              email: 'user@test.fr',
+              password: 'wrong password',
+            },
+            'host',
+          );
         } catch (e) {
           error = e;
         }
@@ -266,10 +317,13 @@ describe('UsersController', () => {
           _id: 'userId',
           usedRefresh: [],
         });
-        const request = await usersController.signIn({
-          grantType: 'refreshToken',
-          refreshToken,
-        });
+        const request = await usersController.signIn(
+          {
+            grantType: 'refreshToken',
+            refreshToken,
+          },
+          'host',
+        );
         expect(save).toHaveBeenCalledTimes(1);
         expect(request.user.id).toBe('userId');
         expect(isJWT(request.accessToken)).toBeTruthy();
@@ -284,10 +338,13 @@ describe('UsersController', () => {
         let error;
         mockedUserModel.findById.mockReturnValueOnce(null);
         try {
-          await usersController.signIn({
-            grantType: 'refreshToken',
-            refreshToken: 'refreshToken',
-          });
+          await usersController.signIn(
+            {
+              grantType: 'refreshToken',
+              refreshToken: 'refreshToken',
+            },
+            'host',
+          );
         } catch (e) {
           error = e;
         }
@@ -303,10 +360,13 @@ describe('UsersController', () => {
           _id: 'userId',
         });
         try {
-          await usersController.signIn({
-            grantType: 'refreshToken',
-            refreshToken: 'wrong refresh token',
-          });
+          await usersController.signIn(
+            {
+              grantType: 'refreshToken',
+              refreshToken: 'wrong refresh token',
+            },
+            'host',
+          );
         } catch (e) {
           error = e;
         }
@@ -468,7 +528,10 @@ describe('UsersController', () => {
         newPasswordRepeat: 'newPassword',
       });
 
-      expect(request).toStrictEqual({ ...mockedUser, password: 'newPassword' });
+      expect(request).toStrictEqual({
+        firstName: mockedUser.firstName,
+        lastName: mockedUser.lastName,
+      });
       expect(bcrypt.hash).toHaveBeenCalledWith('newPassword', 10);
       expect(mockedUserModel.findById).toHaveBeenCalledWith(mockedUser._id);
     });

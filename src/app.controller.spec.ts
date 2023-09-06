@@ -16,7 +16,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(appController.isAlive()).toBe('Its alive!');
+      expect(appController.isAlive()).toBe('Ma Ville Accessible - Auth_api');
     });
   });
 });
