@@ -35,10 +35,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js 18
+    - name: Use Node.js 20
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: 'npm'
     - run: |
         npm install
@@ -48,13 +48,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Use Node.js 18
+    - name: Use Node.js 20
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: 'npm'
     - run: |
         npm install
         npm run test
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          node-version: 20
+          fetch-depth: 0 
+      - name: Install dependencies
+        run: npm install
+      - name: Test and coverage
+        run: npm run test:cov
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets. SONARCLOUD_TOKEN }}
     
   

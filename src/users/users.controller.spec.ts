@@ -61,7 +61,6 @@ describe('UsersController', () => {
       ],
     }).compile();
 
-    //UsersService = module.get<UsersService>(UsersService);
     usersController = module.get<UsersController>(UsersController);
   });
 
