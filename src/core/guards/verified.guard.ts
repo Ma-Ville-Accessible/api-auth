@@ -14,7 +14,7 @@ import { Model } from 'mongoose';
 export class AuthGuard implements CanActivate {
   constructor(@InjectModel(User.name) private UserModel: Model<UserDocument>) {}
 
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | boolean {
+  canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     return this.validateRequest(request);
   }

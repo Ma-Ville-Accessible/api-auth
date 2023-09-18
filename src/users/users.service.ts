@@ -15,7 +15,6 @@ import * as jwt from 'jsonwebtoken';
 import handlebars from 'handlebars';
 
 import { send } from '../core/utils/mails';
-import { HTTPError } from '../core/interfaces/Error';
 import { User, UserDocument } from '../core/schemas/users.schema';
 import { CreateUserDto } from './Dto/create-user.dto';
 import { UpdateUserDto } from './Dto/update-user.dto';
@@ -23,6 +22,15 @@ import {
   Institution,
   InstitutionDocument,
 } from 'src/core/schemas/institution.schema';
+import {
+  user,
+  auth,
+  create,
+  update,
+  verify,
+  requestPassword,
+  updatePassword,
+} from './user.interface';
 
 @Injectable()
 export class UsersService {
@@ -41,13 +49,13 @@ export class UsersService {
     private InstitutionModel: Model<InstitutionDocument>,
   ) {}
 
-  async getOneUser(id: string): Promise<object> {
+  async getOneUser(id: string): Promise<user> {
     const User = await this.UserModel.findById(id);
     if (!User) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     }
     return {
-      id: User._id,
+      id: User._id.toString(),
       email: User.email,
       firstName: User.firstName,
       lastName: User.lastName,
@@ -55,10 +63,7 @@ export class UsersService {
     };
   }
 
-  private async authWithPassword(
-    host: string,
-    UserData: any,
-  ): Promise<HTTPError | object> {
+  private async authWithPassword(host: string, UserData: any): Promise<auth> {
     const user = await this.UserModel.findOne({ email: UserData.email });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -95,20 +100,17 @@ export class UsersService {
       refreshToken: user.refreshToken,
       user: {
         ...(institution && { institution }),
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         isVerified: user.isVerified,
-        role: user.role,
       },
     };
   }
 
   //could delegate this to the guard
-  private async authWithRefreshToken(
-    UserData: any,
-  ): Promise<HTTPError | object> {
+  private async authWithRefreshToken(UserData: any): Promise<auth> {
     const user = await this.UserModel.findById(UserData.id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -129,16 +131,16 @@ export class UsersService {
       expiresIn: 9000000,
       refreshToken: user.refreshToken,
       user: {
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
+        isVerified: user.isVerified,
       },
     };
   }
 
-  async createUser(User: CreateUserDto): Promise<HTTPError | any> {
+  async createUser(User: CreateUserDto): Promise<create> {
     const user = await this.UserModel.findOne({ email: User.email });
     if (user) {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
@@ -177,7 +179,7 @@ export class UsersService {
     };
   }
 
-  async signIn(host: string, UserData: any): Promise<HTTPError | object> {
+  async signIn(host: string, UserData: any): Promise<auth> {
     switch (UserData.grantType) {
       case 'password':
         return this.authWithPassword(host, UserData);
@@ -188,10 +190,7 @@ export class UsersService {
     }
   }
 
-  async updateUser(
-    id: string,
-    User: UpdateUserDto,
-  ): Promise<HTTPError | object> {
+  async updateUser(id: string, User: UpdateUserDto): Promise<update> {
     const storedUser = await this.UserModel.findById(id);
     if (!storedUser) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -226,7 +225,7 @@ export class UsersService {
     };
   }
 
-  async requestPasswordReset(data: object): Promise<HTTPError | object> {
+  async requestPasswordReset(data: object): Promise<requestPassword> {
     const user = await this.UserModel.findOne({ email: data['email'] });
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -248,10 +247,7 @@ export class UsersService {
     return { message: 'Password reset requested' };
   }
 
-  async updateUserPassword(
-    id: string,
-    body: object,
-  ): Promise<HTTPError | object> {
+  async updateUserPassword(id: string, body: object): Promise<updatePassword> {
     const user = await this.UserModel.findById(id);
     if (body['password'] !== body['passwordRepeat']) {
       throw new HttpException('Passwords mismatch', HttpStatus.BAD_REQUEST);
@@ -262,7 +258,7 @@ export class UsersService {
     return { message: 'Password updated' };
   }
 
-  async verifyUser(id: string) {
+  async verifyUser(id: string): Promise<verify> {
     const user = await this.UserModel.findById(id);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
