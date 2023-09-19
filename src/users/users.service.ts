@@ -21,7 +21,7 @@ import { UpdateUserDto } from './Dto/update-user.dto';
 import {
   Institution,
   InstitutionDocument,
-} from 'src/core/schemas/institution.schema';
+} from '../core/schemas/institution.schema';
 import {
   user,
   auth,

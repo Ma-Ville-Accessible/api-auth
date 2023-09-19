@@ -15,8 +15,8 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { Types } from 'mongoose';
 
-import { AuthGuard } from 'src/core/guards/auth.guard';
-import { OtaGuard } from 'src/core/guards/ota.guard';
+import { AuthGuard } from '../core/guards/auth.guard';
+import { OtaGuard } from '../core/guards/ota.guard';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './Dto/update-user.dto';
 import { ForgottenPasswordDto } from './Dto/forgotten-password.dto';
@@ -27,7 +27,7 @@ import { createExample } from '../swagger/users/create.example';
 import { updateExample } from '../swagger/users/update.example';
 import { authenticateExample } from '../swagger/users/authenticate.example';
 import { UsersService } from './users.service';
-import { validateBody } from 'src/core/utils/validation';
+import { validateBody } from '../core/utils/validation';
 
 import {
   user,

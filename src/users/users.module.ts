@@ -10,7 +10,7 @@ import { APP_GUARD } from '@nestjs/core';
 import {
   Institution,
   InstitutionSchema,
-} from 'src/core/schemas/institution.schema';
+} from '../core/schemas/institution.schema';
 
 @Module({
   imports: [
